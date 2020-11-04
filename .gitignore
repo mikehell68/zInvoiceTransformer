@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/ZinvoiceTransformer/v16
+/bin/Release
+/obj/x86/Release
