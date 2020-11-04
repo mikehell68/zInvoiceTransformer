@@ -8,6 +8,7 @@ namespace ZinvoiceTransformer
     {
         bool Connect(string host, int port, string username, string password);
         void Connect();
+        void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo);
     }
 
     public class Ftp : ITransferProtocol
@@ -18,6 +19,11 @@ namespace ZinvoiceTransformer
         }
 
         public void Connect()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
             throw new NotImplementedException();
         }
@@ -65,6 +71,15 @@ namespace ZinvoiceTransformer
         {
             throw new NotImplementedException();
         }
+
+        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
+        {
+            Connect(
+                remoteInvoiceConnectionInfo.Url,
+                remoteInvoiceConnectionInfo.Port,
+                remoteInvoiceConnectionInfo.Username,
+                remoteInvoiceConnectionInfo.Password);
+        }
     }
 
     public class Api : ITransferProtocol
@@ -75,6 +90,11 @@ namespace ZinvoiceTransformer
         }
 
         public void Connect()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
             throw new NotImplementedException();
         }
