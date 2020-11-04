@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<SqlScripts>
+  <SqlScript Id="1" Name="UpdateFieldDefinitions">
+    <![CDATA[UPDATE usfFieldDef SET StartChar = {0}, Chars = {1} WHERE FieldId = {2}]]>
+  </SqlScript>
+  <SqlScript Id="2" Name="UpdateLbProcessingFieldDefinition">
+    <![CDATA[DECLARE @lbValue CHAR(1)
+    SET @lbValue = {0}
+    IF EXISTS(SELECT * FROM usfFieldDef WHERE FieldName LIKE 'lb processing')
+    BEGIN
+      UPDATE usfFieldDef SET StartChar = @lbValue WHERE FieldName LIKE 'lb processing'
+    END
+    ELSE
+    BEGIN
+      INSERT usfFieldDef(FieldID, FieldName, StartChar)
+      VALUES(10, 'LB Processing', @lbValue)
+    END]]>
+  </SqlScript>
+  <SqlScript Id="3" Name="UpdateSupplierNameFieldDefinition">
+    <![CDATA[DECLARE @supplierNameValue VARCHAR(20)
+    SET @supplierNameValue = '{0}'
+    IF EXISTS(SELECT * FROM usfFieldDef WHERE FieldName LIKE 'SupplierName')
+    BEGIN
+      UPDATE usfFieldDef SET DataType = @supplierNameValue WHERE FieldName LIKE 'SupplierName'
+    END
+    ELSE
+    BEGIN
+      INSERT usfFieldDef(FieldID, FieldName, DataType)
+      VALUES(11, 'SupplierName', @supplierNameValue)
+    END]]>
+  </SqlScript>
+  <SqlScript Id="4" Name="UpdateAlliantImportRefFieldSize">
+    <![CDATA[ALTER TABLE Alliant
+    ALTER COLUMN ACode VARCHAR(15)
+    
+    ALTER TABLE AlliaInv
+    ALTER COLUMN ACode VARCHAR(15)
+    
+    ALTER TABLE AlliaFil
+    ALTER COLUMN Name VARCHAR(255)]]>
+  </SqlScript>
+  <SqlScript Id="5" Name="UpdatePurSysVarImportFolder">
+    <![CDATA[UPDATE PurSysVar
+    SET ImportDir = '{0}']]>
+  </SqlScript>
+</SqlScripts>
