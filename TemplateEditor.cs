@@ -276,7 +276,7 @@ namespace ZinvoiceTransformer
         {
             // TODO: Hook up server connection
             var rc = RemoteConnectionFactory.Build((int)_protocolTypeComboBox.SelectedValue);
-            var connected = rc.Connect(_urlTextbox.Text, Convert.ToInt32(_portTextbox.Text), _usernameTextbox.Text, _passwordTextbox.Text);
+            var connected = rc.CheckConnection(_urlTextbox.Text, Convert.ToInt32(_portTextbox.Text), _usernameTextbox.Text, _passwordTextbox.Text);
 
             MessageBox.Show(this,$"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"), "Test Connection", MessageBoxButtons.OK);
         }

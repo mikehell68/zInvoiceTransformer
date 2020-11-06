@@ -261,7 +261,7 @@ namespace ZinvoiceTransformer
             var rc = RemoteConnectionFactory.Build(Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
                 .Element("RemoteInvoiceSettings").Attribute("RemoteTransferProtocolTypeId").Value));
 
-            rc.Connect(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo());
+            rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo());
         }
     }
 }

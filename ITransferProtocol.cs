@@ -6,24 +6,24 @@ namespace ZinvoiceTransformer
 {
     public interface ITransferProtocol
     {
-        bool Connect(string host, int port, string username, string password);
-        void Connect();
-        void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo);
+        bool CheckConnection(string host, int port, string username, string password);
+        void CheckConnection();
+        void CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo);
     }
 
     public class Ftp : ITransferProtocol
     {
-        public bool Connect(string host, int port, string username, string password)
+        public bool CheckConnection(string host, int port, string username, string password)
         {
             throw new NotImplementedException();
         }
 
-        public void Connect()
+        public void CheckConnection()
         {
             throw new NotImplementedException();
         }
 
-        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
+        public void CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
             throw new NotImplementedException();
         }
@@ -31,7 +31,8 @@ namespace ZinvoiceTransformer
 
     public class Sftp : ITransferProtocol
     {
-        public bool Connect(string host, int port, string username, string password)
+        ConnectionInfo _connectionInfo;
+        public bool CheckConnection(string host, int port, string username, string password)
         {
             bool result;
             //PrivateKeyFile keyFile = new PrivateKeyFile(@"path/to/OpenSsh-RSA-key.ppk");
@@ -42,10 +43,10 @@ namespace ZinvoiceTransformer
                 new PasswordAuthenticationMethod(username, password)
                 //methods.Add(new PrivateKeyAuthenticationMethod(username, keyFiles));
             };
-            
-            var con = new ConnectionInfo(host, port, username, methods.ToArray());
 
-            using (var client = new SftpClient(con))
+            _connectionInfo = new ConnectionInfo(host, port, username, methods.ToArray());
+
+            using (var client = new SftpClient(_connectionInfo))
             {
                 try
                 {
@@ -67,34 +68,63 @@ namespace ZinvoiceTransformer
             return result;
         }
 
-        public void Connect()
+        public void CheckConnection()
         {
             throw new NotImplementedException();
         }
 
-        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
+        public void CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
-            Connect(
+            CheckConnection(
                 remoteInvoiceConnectionInfo.Url,
                 remoteInvoiceConnectionInfo.Port,
                 remoteInvoiceConnectionInfo.Username,
                 remoteInvoiceConnectionInfo.Password);
         }
+
+        /// <summary>
+        /// List a remote directory in the console.
+        /// </summary>
+        private void ListFiles()
+        {
+            string remoteDirectory = "/some/example/directory";
+
+            using (SftpClient sftp = new SftpClient(_connectionInfo))
+            {
+                try
+                {
+                    sftp.Connect();
+
+                    var files = sftp.ListDirectory(remoteDirectory);
+
+                    foreach (var file in files)
+                    {
+                        Console.WriteLine(file.Name);
+                    }
+
+                    sftp.Disconnect();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("An exception has been caught " + e.ToString());
+                }
+            }
+        }
     }
 
     public class Api : ITransferProtocol
     {
-        public bool Connect(string host, int port, string username, string password)
+        public bool CheckConnection(string host, int port, string username, string password)
         {
             throw new NotImplementedException();
         }
 
-        public void Connect()
+        public void CheckConnection()
         {
             throw new NotImplementedException();
         }
 
-        public void Connect(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
+        public void CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
             throw new NotImplementedException();
         }
