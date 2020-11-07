@@ -6,6 +6,7 @@ using System.Diagnostics;
 using LogThis;
 using System.IO;
 using ZinvoiceTransformer.Properties;
+using System.Text;
 
 namespace ZinvoiceTransformer
 {
@@ -261,7 +262,25 @@ namespace ZinvoiceTransformer
             var rc = RemoteConnectionFactory.Build(Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
                 .Element("RemoteInvoiceSettings").Attribute("RemoteTransferProtocolTypeId").Value));
 
-            rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo());
+            if (rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
+            {
+                StringBuilder sb = new StringBuilder();
+                rc.ListFiles().ForEach(s => sb.AppendLine(s));
+                MessageBox.Show(sb.ToString());
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            //"ZonalInvoiceImport.exe_20201106.log"
+
+                var rc = RemoteConnectionFactory.Build(Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
+                .Element("RemoteInvoiceSettings").Attribute("RemoteTransferProtocolTypeId").Value));
+
+            if (rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
+            {
+                rc.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+            }
         }
     }
 }

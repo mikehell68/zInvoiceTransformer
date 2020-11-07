@@ -5,3 +5,5 @@
 /.vs/ZinvoiceTransformer/v16
 /bin/Release
 /obj/x86/Release
+/bin/Debug
+/obj/x86/Debug
