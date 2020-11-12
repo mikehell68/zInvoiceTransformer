@@ -5,45 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Renci.SshNet;
 
-namespace ZinvoiceTransformer
+namespace ZinvoiceTransformer.Comms
 {
-    public interface ITransferProtocol
-    {
-        bool CheckConnection(string host, int port, string username, string password);
-        void CheckConnection();
-        bool CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo);
-        List<string> ListFiles();
-        void UploadFile(string fileToUpload);
-    }
-
-    public class Ftp : ITransferProtocol
-    {
-        public bool CheckConnection(string host, int port, string username, string password)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CheckConnection()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> ListFiles()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UploadFile(string fileToUpload)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     public class Sftp : ITransferProtocol
     {
         ConnectionInfo _connectionInfo;
@@ -65,7 +28,7 @@ namespace ZinvoiceTransformer
             {
                 try
                 {
-                
+
                     client.Connect();
                     result = client.IsConnected;
                 }
@@ -153,52 +116,6 @@ namespace ZinvoiceTransformer
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-            }
-        }
-    }
-
-    public class Api : ITransferProtocol
-    {
-        public bool CheckConnection(string host, int port, string username, string password)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CheckConnection()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<string> ListFiles()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UploadFile(string fileToUpload)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public static class RemoteConnectionFactory
-    {
-        public static ITransferProtocol Build(int protocolType)
-        {
-            switch (protocolType)
-            {
-                case 1:
-                    return new Ftp();
-                case 2:
-                    return new Sftp();
-                case 3:
-                    return new Api();
-                default:
-                    throw new ArgumentException("Unknown protocol type");
             }
         }
     }

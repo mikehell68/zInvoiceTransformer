@@ -7,6 +7,7 @@ using LogThis;
 using System.IO;
 using ZinvoiceTransformer.Properties;
 using System.Text;
+using ZinvoiceTransformer.Comms;
 
 namespace ZinvoiceTransformer
 {
@@ -15,6 +16,8 @@ namespace ZinvoiceTransformer
         string _errorMsg = "";
         string _infoMsg = "";
         private static InvoiceTemplateModel _invoiceTemplateModel;
+
+        ITransferProtocol _transferProtocol;
 
         public InvoiceImportMain()
         {
@@ -51,6 +54,7 @@ namespace ZinvoiceTransformer
             _invoiceFilesListBox.Items.Clear();
             
             _templateSelectorListBox.Items.AddRange(GetListItemsForActiveTemplates());
+            _templateSelectorListBox.SetSelected(0, true);
         }
 
         private static TemplateListItem[] GetListItemsForActiveTemplates()
@@ -70,6 +74,12 @@ namespace ZinvoiceTransformer
             if (_templateSelectorListBox.SelectedItem != null)
             {
                 _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
+                
+                _transferProtocol = RemoteConnectionFactory.Build(
+                    Convert.ToInt32(
+                        _invoiceTemplateModel.SelectedTemplate
+                        ?.Element("RemoteInvoiceSettings")
+                        ?.Attribute("RemoteTransferProtocolTypeId").Value ?? "0"));
 
                 _invoiceFilesListBox.Items.Clear();
 
@@ -79,8 +89,17 @@ namespace ZinvoiceTransformer
                     _invoiceFilesListBox.Items.AddRange(fileList);
                 else
                 {
-                    MessageBox.Show(this, "Could not find folder: " + _invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value,
-                        Resources.AppNameText, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if( MessageBox.Show(
+                            this, 
+                            "Could not find invoice source folder: " + '\n' +
+                            _invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value + 
+                            '\n' + "Do you want to create the folder now?",
+                            Resources.AppNameText, 
+                            MessageBoxButtons.YesNoCancel, 
+                            MessageBoxIcon.Warning)  == DialogResult.Yes )
+                    {
+                        Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value);
+                    }
                 }
             }
         }
@@ -259,27 +278,19 @@ namespace ZinvoiceTransformer
 
         private void OnGetRemoteInvoicesClick(object sender, EventArgs e)
         {
-            var rc = RemoteConnectionFactory.Build(Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
-                .Element("RemoteInvoiceSettings").Attribute("RemoteTransferProtocolTypeId").Value));
-
-            if (rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
+            if (_transferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
             {
                 StringBuilder sb = new StringBuilder();
-                rc.ListFiles().ForEach(s => sb.AppendLine(s));
+                _transferProtocol.ListFiles().ForEach(s => sb.AppendLine(s));
                 MessageBox.Show(sb.ToString());
             }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //"ZonalInvoiceImport.exe_20201106.log"
-
-                var rc = RemoteConnectionFactory.Build(Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
-                .Element("RemoteInvoiceSettings").Attribute("RemoteTransferProtocolTypeId").Value));
-
-            if (rc.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
+            if (_transferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
             {
-                rc.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+                _transferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
             }
         }
     }

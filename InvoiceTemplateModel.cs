@@ -84,7 +84,7 @@ namespace ZinvoiceTransformer
             string templatesXml;
             try
             {
-                templatesXml = File.ReadAllText(@"InvoiceImportTemplates.xml");
+                templatesXml = File.ReadAllText(@"xml\InvoiceImportTemplates.xml");
             }
             catch (Exception ex)
             {

@@ -55,6 +55,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AztecBusinessService.cs" />
+    <Compile Include="Comms\Api.cs" />
+    <Compile Include="Comms\Ftp.cs" />
+    <Compile Include="Comms\RemoteConnectionFactory.cs" />
+    <Compile Include="Comms\Sftp.cs" />
     <Compile Include="ImportApplicationConfigurationForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -69,7 +73,7 @@
     </Compile>
     <Compile Include="CsvParser.cs" />
     <Compile Include="InvoiceTemplateModel.cs" />
-    <Compile Include="ITransferProtocol.cs" />
+    <Compile Include="Comms\ITransferProtocol.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -92,7 +96,7 @@
     <Compile Include="Transformer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="InvoiceImportTemplates.xml">
+    <Content Include="xml\InvoiceImportTemplates.xml">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

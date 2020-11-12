@@ -19,6 +19,7 @@
       <FileFormatType Id="3" Name="xml" />
     </FileFormatTypes>
     <RemoteTransferProtocolTypes>
+      <RemoteTransferProtocolType Id="0" Name="None" />
       <RemoteTransferProtocolType Id="1" Name="FTP" />
       <RemoteTransferProtocolType Id="2" Name="sFTP" />
       <RemoteTransferProtocolType Id="3" Name="API" />
@@ -237,7 +238,7 @@
       <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
     </Template>
     <Template Id="5" Name="US Food (A2A)" Active="1" TemplateVersion="1" Description="US Food Invoice" FileFormatTypeId="1" SourceFolder="c:\temp\usfood" OutputFolder="c:\temp\import" Delimiter="~" LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="1" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
-      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="2" url="test.rebex.net" port="22" username="demo" password="password" keyfileLocation="C:\temp" InvoiceFileCustomerPrefix="" />
+      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="2" url="test.rebex.net" port="22" username="demo" password="password" keyfileLocation="C:\temp" RemoteFolder="" InvoiceFileCustomerPrefix="" />
       <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
         <Field FieldNameId="1">
           <Delimited Position="20" />

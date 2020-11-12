@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using System;
+using ZinvoiceTransformer.Comms;
 
 namespace ZinvoiceTransformer
 {
@@ -82,6 +83,8 @@ namespace ZinvoiceTransformer
 
         private void LoadTemplate()
         {
+            _templateFieldDefinitionsFlowLayoutPanel.SuspendLayout();
+
             _templateFieldDefinitionsFlowLayoutPanel.Controls.Clear();
 
             if (_templatesListBox.SelectedItem != null)
@@ -161,19 +164,23 @@ namespace ZinvoiceTransformer
                 _passwordTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("password").Value;
                 _keyfileLocationTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("keyfileLocation").Value;
                 _invoiceFilePrefixTextBox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("InvoiceFileCustomerPrefix").Value;
+                _remoteFolderTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("RemoteFolder").Value;
             }
+
+            _templateFieldDefinitionsFlowLayoutPanel.ResumeLayout();
         }
 
         private void CreateRemoteInvoiceSettingsElementIfRequired()
         {
             if (_originalTemplate.Element("RemoteInvoiceSettings") == null)
                 _originalTemplate.Add(new XElement("RemoteInvoiceSettings",
-                    new XAttribute("RemoteTransferProtocolTypeId", 1),
+                    new XAttribute("RemoteTransferProtocolTypeId", 0),
                     new XAttribute("url", ""),
-                    new XAttribute("port", 21),
+                    new XAttribute("port", 0),
                     new XAttribute("username", ""),
                     new XAttribute("password", ""),
                     new XAttribute("keyfileLocation", ""),
+                    new XAttribute("RemoteFolder", ""),
                     new XAttribute("InvoiceFileCustomerPrefix", "")));
         }
 
