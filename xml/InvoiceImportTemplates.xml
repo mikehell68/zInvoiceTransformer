@@ -238,7 +238,7 @@
       <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
     </Template>
     <Template Id="5" Name="US Food (A2A)" Active="1" TemplateVersion="1" Description="US Food Invoice" FileFormatTypeId="1" SourceFolder="c:\temp\usfood" OutputFolder="c:\temp\import" Delimiter="~" LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="1" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
-      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="2" url="test.rebex.net" port="22" username="demo" password="password" keyfileLocation="C:\temp" RemoteFolder="" InvoiceFileCustomerPrefix="" />
+      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="2" url="ediprod.usfoods.com" port="22" username="ECWDBARB" password="" keyfileLocation="C:\temp" RemoteFolder="./inv" InvoiceFileCustomerPrefix="" />
       <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
         <Field FieldNameId="1">
           <Delimited Position="20" />
