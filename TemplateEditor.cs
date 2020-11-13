@@ -241,7 +241,7 @@ namespace ZinvoiceTransformer
         private void SaveTemplates()
         {
             _originalTemplate.ReplaceWith(_selectedTemplateForDisplay);
-            _invoiceImportTemplates.Save("InvoiceImportTemplates.xml");
+            _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
             _isInitialLoad = true;
             LoadTemplates();
             _isInitialLoad = false;

@@ -10,6 +10,7 @@ namespace ZinvoiceTransformer
 {
     public class InvoiceTemplateModel : INotifyPropertyChanged
     {
+        public const string InvoiceImportTemplatePath = @"xml\InvoiceImportTemplates.xml";
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {
@@ -84,7 +85,7 @@ namespace ZinvoiceTransformer
             string templatesXml;
             try
             {
-                templatesXml = File.ReadAllText(@"xml\InvoiceImportTemplates.xml");
+                templatesXml = File.ReadAllText(InvoiceImportTemplatePath);
             }
             catch (Exception ex)
             {
@@ -144,7 +145,7 @@ namespace ZinvoiceTransformer
                 return GetAllTemplates().Where(t => t.Attribute("Active").Value == "1");
             }
 
-            return allActiveTemplates;
+            return new List<XElement>();
         }
 
         public XElement GetTemplate(string templateId)
@@ -209,7 +210,7 @@ namespace ZinvoiceTransformer
         {
             try
             {
-                _invoiceImportTemplates.Save(@"InvoiceImportTemplates.xml");
+                _invoiceImportTemplates.Save(InvoiceImportTemplatePath);
             }
             catch (Exception ex)
             {
@@ -267,7 +268,7 @@ namespace ZinvoiceTransformer
             _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").SetAttributeValue("FileName", _importAppLocation);
             _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").SetAttributeValue("InvoiceFileLocation", _importAppInvoiceFileLocation);
 
-            _invoiceImportTemplates.Save(@"InvoiceImportTemplates.xml");
+            _invoiceImportTemplates.Save(InvoiceImportTemplatePath);
             IsDirty = false;
         }
 

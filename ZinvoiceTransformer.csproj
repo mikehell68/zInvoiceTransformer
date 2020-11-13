@@ -59,6 +59,7 @@
     <Compile Include="Comms\Ftp.cs" />
     <Compile Include="Comms\RemoteConnectionFactory.cs" />
     <Compile Include="Comms\Sftp.cs" />
+    <Compile Include="Constants\InvoiceTemplateConst.cs" />
     <Compile Include="ImportApplicationConfigurationForm.cs">
       <SubType>Form</SubType>
     </Compile>

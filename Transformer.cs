@@ -319,7 +319,7 @@ namespace ZinvoiceTransformer
             string templatesXml;
             try
             {
-                templatesXml = File.ReadAllText(@"InvoiceImportTemplates.xml");
+                templatesXml = File.ReadAllText(InvoiceTemplateModel.InvoiceImportTemplatePath);
             }
             catch (Exception ex)
             {
@@ -348,7 +348,7 @@ namespace ZinvoiceTransformer
         {
             try
             {
-                _invoiceImportTemplates.Save(@"InvoiceImportTemplates.xml");
+                _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
             }
             catch (Exception ex)
             {
