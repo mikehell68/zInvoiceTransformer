@@ -321,7 +321,8 @@ namespace ZinvoiceTransformer
             _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("password", _passwordTextbox.Text);
             _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("keyfileLocation", _keyfileLocationTextbox.Text);
             _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("InvoiceFileCustomerPrefix", _invoiceFilePrefixTextBox.Text);
-            
+            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("RemoteFolder", _remoteFolderTextbox.Text);
+
             _selectedTemplateForDisplay.Attribute("HasMasterRecord").Value = _hasMasterCheckBox.Checked ? "1" : "0";
             _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypePostion", _masterRecordPositionNumericUpDown.Value);
             _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypeIdentifier", _masterRecordIdentifierTextBox.Text);

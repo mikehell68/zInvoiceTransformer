@@ -290,7 +290,7 @@ namespace ZinvoiceTransformer
         {
             if (_transferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
             {
-                _transferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+                //_transferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
             }
         }
     }

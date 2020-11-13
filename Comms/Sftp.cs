@@ -65,7 +65,7 @@ namespace ZinvoiceTransformer.Comms
         /// </summary>
         public List<string> ListFiles()
         {
-            string remoteDirectory = "/upload";
+            string remoteDirectory = "./inv";
             var filelist = new List<string>();
 
             using (SftpClient sftp = new SftpClient(_connectionInfo))

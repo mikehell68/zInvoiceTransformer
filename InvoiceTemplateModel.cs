@@ -194,12 +194,12 @@ namespace ZinvoiceTransformer
                 return new RemoteInvoiceConnectionInfo
                 {
                     DestinationFolder = SelectedTemplate.Attribute("SourceFolder").Value,
-                    InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings")
-                        .Attribute("InvoiceFileCustomerPrefix").Value,
+                    InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("InvoiceFileCustomerPrefix").Value,
                     Url = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
                     Port = Convert.ToInt32(SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("port").Value),
                     Username = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("username").Value,
-                    Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value
+                    Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value,
+                    RemoteFolder = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("RemoteFolder").Value
                 };
 
             return new RemoteInvoiceConnectionInfo();
