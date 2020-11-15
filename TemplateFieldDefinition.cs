@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     internal class TemplateFieldDefinition : UserControl
     {

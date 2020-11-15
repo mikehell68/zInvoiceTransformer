@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using System.IO;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     public partial class ImportApplicationConfigurationForm : Form
     {

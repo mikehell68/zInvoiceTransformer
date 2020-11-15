@@ -1,21 +1,21 @@
 ﻿using System;
 
-namespace ZinvoiceTransformer.Comms
+namespace zInvoiceTransformer.Comms
 {
     public static class RemoteConnectionFactory
     {
-        public static ITransferProtocol Build(int protocolType)
+        public static IClientTransferProtocol Build(int protocolType)
         {
             switch (protocolType)
             {
                 case 0:
                     return null;
                 case 1:
-                    return new Ftp();
+                    return new FtpClient();
                 case 2:
-                    return new Sftp();
+                    return new SecureFtpClient();
                 case 3:
-                    return new Api();
+                    return new ApiClient();
                 default:
                     throw new ArgumentException("Unknown protocol type");
             }

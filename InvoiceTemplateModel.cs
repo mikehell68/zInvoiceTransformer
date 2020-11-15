@@ -6,17 +6,15 @@ using System.Xml.Linq;
 using LogThis;
 using System.ComponentModel;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     public class InvoiceTemplateModel : INotifyPropertyChanged
     {
-        public const string InvoiceImportTemplatePath = @"xml\InvoiceImportTemplates.xml";
+        public const string InvoiceImportTemplatePath = @"InvoiceImportTemplates.xml";
         public event PropertyChangedEventHandler PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) 
-                handler(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected bool SetField<T>(ref T field, T value, string propertyName)
@@ -33,43 +31,43 @@ namespace ZinvoiceTransformer
         XDocument _invoiceImportTemplates;
         public XDocument InvoiceImportTemplates
         {
-            get { return _invoiceImportTemplates; }
-            set { _invoiceImportTemplates = value; }
+            get => _invoiceImportTemplates;
+            set => _invoiceImportTemplates = value;
         }
 
         XElement _selectedTemplate;
         public XElement SelectedTemplate
         {
-            get { return _selectedTemplate; }
-            set { _selectedTemplate = value; }
+            get => _selectedTemplate;
+            set => _selectedTemplate = value;
         }
 
         string _selectedTemplateName;
         public string SelectedTemplateName
         {
-            get { return _selectedTemplateName; }
-            private set { SetField(ref _selectedTemplateName, value, "SelectedTemplateName"); }
+            get => _selectedTemplateName;
+            private set => SetField(ref _selectedTemplateName, value, "SelectedTemplateName");
         }
 
         string _selectedTemplateDescription;
         public string SelectedTemplateDescription
         {
-            get { return _selectedTemplateDescription; }
-            private set { SetField(ref _selectedTemplateDescription, value, "SelectedTemplateDescription"); }
+            get => _selectedTemplateDescription;
+            private set => SetField(ref _selectedTemplateDescription, value, "SelectedTemplateDescription");
         }
 
         string _importAppLocation;
         public string ImportAppLocation
         { 
-            get { return _importAppLocation; } 
-            set { SetField(ref _importAppLocation, value, "ImportAppLocation"); }
+            get => _importAppLocation;
+            set => SetField(ref _importAppLocation, value, "ImportAppLocation");
         }
 
         string _importAppInvoiceFileLocation;
         public string ImportAppInvoiceFileLocation
         {
-            get { return _importAppInvoiceFileLocation; }
-            set { SetField(ref _importAppInvoiceFileLocation, value, "ImportAppInvoiceFileLocation"); }
+            get => _importAppInvoiceFileLocation;
+            set => SetField(ref _importAppInvoiceFileLocation, value, "ImportAppInvoiceFileLocation");
         }
 
         public InvoiceTemplateModel()
@@ -89,7 +87,7 @@ namespace ZinvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("Error reading invoice templates file: {0}", ex), eloglevel.error);
+                Log.LogThis($"Error reading invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
 
@@ -100,14 +98,15 @@ namespace ZinvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("Error loading xml from invoice templates file: {0}", ex), eloglevel.error);
+                Log.LogThis($"Error loading xml from invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
             finally
             {
                 templatesStringReader.Close();
             }
-            Log.LogThis(string.Format("{0} invoice templates loaded ", _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()), eloglevel.info);
+            Log.LogThis(
+                $"{_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()} invoice templates loaded ", eloglevel.info);
         }
 
         public TemplateListItem[] GetAllTemplatesArray()
@@ -170,14 +169,16 @@ namespace ZinvoiceTransformer
                 return new string[]{ "<-no supplier selected->" };
 
             string sourceFolder = SelectedTemplate.Attribute("SourceFolder").Value;
-            List<string> files = new List<string>();
-            files.Add(sourceFolder);
+            var files = new List<string>
+            {
+                sourceFolder
+            };
 
             if (Directory.Exists(sourceFolder))
             {
                 var fileList = Directory.GetFiles(sourceFolder).Select(Path.GetFileName).ToArray();
 
-                if (fileList.Count() > 0)
+                if (fileList.Any())
                 {
                     files.AddRange(fileList);
                     return files.ToArray();
@@ -196,7 +197,7 @@ namespace ZinvoiceTransformer
                 {
                     DestinationFolder = SelectedTemplate.Attribute("SourceFolder").Value,
                     InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("InvoiceFileCustomerPrefix").Value,
-                    Url = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
+                    HostUrl = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
                     Port = Convert.ToInt32(SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("port").Value),
                     Username = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("username").Value,
                     Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value,
@@ -206,18 +207,18 @@ namespace ZinvoiceTransformer
             return new RemoteInvoiceConnectionInfo();
         }
 
-        void SaveTemplates()
-        {
-            try
-            {
-                _invoiceImportTemplates.Save(InvoiceImportTemplatePath);
-            }
-            catch (Exception ex)
-            {
-                Log.LogThis(string.Format("Error saving xml invoice templates: {0}", ex), eloglevel.error);
-                throw;
-            }
-        }
+        //void SaveTemplates()
+        //{
+        //    try
+        //    {
+        //        _invoiceImportTemplates.Save(InvoiceImportTemplatePath);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.LogThis($"Error saving xml invoice templates: {ex}", eloglevel.error);
+        //        throw;
+        //    }
+        //}
 
         public TransformResultInfo DoTransform()
         {
@@ -251,7 +252,7 @@ namespace ZinvoiceTransformer
         //    AztecBusinessService.UpdateAztecPurchaseWithSupplierName(invoiceTemplate);
         //}
 
-        public void UpdatePurSysVarImportFolder(XElement invoiceTemplate)
+        public void UpdatePurSysVarImportFolder()
         {
             string outputPathToUse;
 

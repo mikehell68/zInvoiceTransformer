@@ -1,4 +1,4 @@
-﻿namespace ZinvoiceTransformer
+﻿namespace zInvoiceTransformer
 {
     public class TemplateListItem
     {

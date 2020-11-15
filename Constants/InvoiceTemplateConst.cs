@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ZinvoiceTransformer.Constants
+namespace zInvoiceTransformer.Constants
 {
     public static class InvoiceTemplateConst
     {

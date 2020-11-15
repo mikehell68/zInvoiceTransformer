@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using System.Linq;
 using LogThis;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     internal static class AztecBusinessService
     {

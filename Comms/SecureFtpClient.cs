@@ -1,74 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
 using Renci.SshNet;
 
-namespace ZinvoiceTransformer.Comms
+namespace zInvoiceTransformer.Comms
 {
-    public class Sftp : ITransferProtocol
+    public class SecureFtpClient : IClientTransferProtocol
     {
         ConnectionInfo _connectionInfo;
-        public bool CheckConnection(string host, int port, string username, string password)
+        public RemoteInvoiceConnectionInfo RemoteConnectionInfo { get; set; }
+
+        public bool CheckConnection()
         {
-            bool result = false;
-            //PrivateKeyFile keyFile = new PrivateKeyFile(@"path/to/OpenSsh-RSA-key.ppk");
-            //var keyFiles = new[] { keyFile };
+           if (RemoteConnectionInfo == null) 
+               throw new Exception("RemoteInvoiceConnectionInfo cannot be null");
+                
+           RemoteConnectionInfo.Validate();
+           
+           bool result = false;
+           //PrivateKeyFile keyFile = new PrivateKeyFile(@"path/to/OpenSsh-RSA-key.ppk");
+           //var keyFiles = new[] { keyFile };
 
-            var methods = new List<AuthenticationMethod>
-            {
-                new PasswordAuthenticationMethod(username, password)
-                //methods.Add(new PrivateKeyAuthenticationMethod(username, keyFiles));
-            };
+           var methods = new List<AuthenticationMethod>
+           {
+               new PasswordAuthenticationMethod(RemoteConnectionInfo.Username, RemoteConnectionInfo.Password)
+               //methods.Add(new PrivateKeyAuthenticationMethod(username, keyFiles));
+           };
 
-            _connectionInfo = new ConnectionInfo(host, port, username, methods.ToArray());
+           _connectionInfo = new ConnectionInfo(RemoteConnectionInfo.HostUrl, RemoteConnectionInfo.Port, RemoteConnectionInfo.Username, methods.ToArray());
 
-            using (var client = new SftpClient(_connectionInfo))
-            {
-                try
-                {
+           using (var client = new SftpClient(_connectionInfo))
+           {
+               try
+               { 
+                   client.Connect();
+                   result = client.IsConnected;
+               }
+               catch (Exception e)
+               {
+                   Console.WriteLine(e);
+                   //throw;
+               }
+               finally
+               {
+                   client.Disconnect();
+               }
+           }
 
-                    client.Connect();
-                    result = client.IsConnected;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    //throw;
-                }
-                finally
-                {
-                    client.Disconnect();
-                }
-            }
-
-            return result;
+           return result;
         }
 
-        public void CheckConnection()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
-        {
-            return CheckConnection(
-                remoteInvoiceConnectionInfo.Url,
-                remoteInvoiceConnectionInfo.Port,
-                remoteInvoiceConnectionInfo.Username,
-                remoteInvoiceConnectionInfo.Password);
-        }
 
         /// <summary>
         /// List a remote directory in the console.
         /// </summary>
-        public List<string> ListFiles()
+        public List<string> GetFileList()
         {
-            string remoteDirectory = "/inv";
+            string remoteDirectory = RemoteConnectionInfo.RemoteFolder;
             var filelist = new List<string>();
 
-            using (SftpClient sftp = new SftpClient(_connectionInfo))
+            using (var sftp = new SftpClient(_connectionInfo))
             {
                 try
                 {
@@ -91,6 +83,11 @@ namespace ZinvoiceTransformer.Comms
                 }
             }
             return filelist;
+        }
+
+        public void DownloadFiles(List<string> filesToDownload)
+        {
+            throw new NotImplementedException();
         }
 
         public void UploadFile(string fileToUpload)

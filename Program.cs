@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using LogThis;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     static class Program
     {

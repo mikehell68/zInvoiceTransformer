@@ -1,4 +1,4 @@
-﻿namespace ZinvoiceTransformer
+﻿namespace zInvoiceTransformer
 {
     partial class InvoiceImportMain
     {
@@ -118,9 +118,9 @@
             // 
             // _transformBackgroundWorker
             // 
-            this._transformBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this._transformBackgroundWorker_DoWork);
-            this._transformBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this._transformBackgroundWorker_ProgressChanged);
-            this._transformBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._transformBackgroundWorker_RunWorkerCompleted);
+            this._transformBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.TransformBackgroundWorker_DoWork);
+            this._transformBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.TransformBackgroundWorker_ProgressChanged);
+            this._transformBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.TransformBackgroundWorker_RunWorkerCompleted);
             // 
             // _progressPanel
             // 
@@ -377,7 +377,7 @@
             this.button1.TabIndex = 10;
             this.button1.Text = "upload";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.button1.Click += new System.EventHandler(this.Button1_Click);
             // 
             // InvoiceImportMain
             // 

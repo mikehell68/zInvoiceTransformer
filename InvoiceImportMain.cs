@@ -5,19 +5,16 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using LogThis;
 using System.IO;
-using ZinvoiceTransformer.Properties;
-using System.Text;
-using ZinvoiceTransformer.Comms;
+using zInvoiceTransformer.Comms;
+using zInvoiceTransformer.Properties;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     public partial class InvoiceImportMain : Form
     {
         string _errorMsg = "";
         string _infoMsg = "";
         private static InvoiceTemplateModel _invoiceTemplateModel;
-
-        ITransferProtocol _transferProtocol;
 
         public InvoiceImportMain()
         {
@@ -44,10 +41,10 @@ namespace ZinvoiceTransformer
             _nameTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateName", false, DataSourceUpdateMode.Never));
             _descriptionTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateDescription", false, DataSourceUpdateMode.Never));
             
-            LoadAndDisplyTemplates();
+            LoadAndDisplayTemplates();
         }
 
-        private void LoadAndDisplyTemplates()
+        private void LoadAndDisplayTemplates()
         {
             _invoiceTemplateModel.LoadTemplates();
             _templateSelectorListBox.Items.Clear();
@@ -74,12 +71,6 @@ namespace ZinvoiceTransformer
             if (_templateSelectorListBox.SelectedItem != null)
             {
                 _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
-                
-                _transferProtocol = RemoteConnectionFactory.Build(
-                    Convert.ToInt32(
-                        _invoiceTemplateModel.SelectedTemplate
-                        ?.Element("RemoteInvoiceSettings")
-                        ?.Attribute("RemoteTransferProtocolTypeId").Value ?? "0"));
 
                 _invoiceFilesListBox.Items.Clear();
 
@@ -117,10 +108,11 @@ namespace ZinvoiceTransformer
             Log.LogThis("Invoice Import Appliction closed", eloglevel.info);
         }
 
-        private void _transformBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void TransformBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             Log.LogThis("Starting Invoice transform process", eloglevel.info);
             _transformBackgroundWorker.ReportProgress(0);
+            
             Cursor.Current = Cursors.WaitCursor;
             try
             {
@@ -179,7 +171,7 @@ namespace ZinvoiceTransformer
 
             try
             {
-                _invoiceTemplateModel.UpdatePurSysVarImportFolder(_invoiceTemplateModel.SelectedTemplate);
+                _invoiceTemplateModel.UpdatePurSysVarImportFolder();
                 _transformBackgroundWorker.ReportProgress(80);
             }
             catch (Exception ex)
@@ -204,12 +196,12 @@ namespace ZinvoiceTransformer
             }
         }
 
-        private void _transformBackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void TransformBackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             _transformProgressBar.Value = e.ProgressPercentage;
         }
 
-        private void _transformBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void TransformBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (string.IsNullOrEmpty(_errorMsg))
             {
@@ -223,7 +215,7 @@ namespace ZinvoiceTransformer
                                     Resources.AppNameText, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            LoadAndDisplyTemplates();
+            LoadAndDisplayTemplates();
         }
 
         private void OnDoTransformAndImportClick(object sender, EventArgs e)
@@ -243,8 +235,10 @@ namespace ZinvoiceTransformer
         {
             Log.LogThis("Loading active log file: " + Log.LogPath, eloglevel.info);
 
-            var p = new Process();
-            p.StartInfo = new ProcessStartInfo("NotePad.exe", Log.LogPath);
+            var p = new Process
+            {
+                StartInfo = new ProcessStartInfo("NotePad.exe", Log.LogPath)
+            };
             p.Start();
         }
 
@@ -252,8 +246,10 @@ namespace ZinvoiceTransformer
         {
             Log.LogThis("Loading log file folder: " + Path.GetDirectoryName(Log.LogPath), eloglevel.info);
 
-            var p = new Process();
-            p.StartInfo = new ProcessStartInfo("explorer.exe", Path.GetDirectoryName(Log.LogPath));
+            var p = new Process
+            {
+                StartInfo = new ProcessStartInfo("explorer.exe", Path.GetDirectoryName(Log.LogPath))
+            };
             p.Start();
         }
 
@@ -261,14 +257,14 @@ namespace ZinvoiceTransformer
         {
             var templateEditor = new TemplateEditor(_invoiceTemplateModel);
             templateEditor.ShowDialog(this);
-            LoadAndDisplyTemplates();
+            LoadAndDisplayTemplates();
         }
 
         private void OnImportApSettingsClick(object sender, EventArgs e)
         {
             var importAppSettings = new ImportApplicationConfigurationForm(_invoiceTemplateModel);
             importAppSettings.ShowDialog(this);
-            //LoadAndDisplyTemplates();
+            //LoadAndDisplayTemplates();
         }
 
         private static void OnCloseClick(object sender, EventArgs e)
@@ -278,20 +274,16 @@ namespace ZinvoiceTransformer
 
         private void OnGetRemoteInvoicesClick(object sender, EventArgs e)
         {
-            if (_transferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
-            {
-                StringBuilder sb = new StringBuilder();
-                _transferProtocol.ListFiles().ForEach(s => sb.AppendLine(s));
-                MessageBox.Show(sb.ToString());
-            }
+            var fileDownloadDialog = new RemoteDownloadDialog(_invoiceTemplateModel);
+            fileDownloadDialog.ShowDialog(this);
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Button1_Click(object sender, EventArgs e)
         {
-            if (_transferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
-            {
-                //_transferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
-            }
+            //if (_clientTransferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
+            //{
+            //    //_clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+            //}
         }
     }
 }

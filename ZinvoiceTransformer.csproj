@@ -55,10 +55,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AztecBusinessService.cs" />
-    <Compile Include="Comms\Api.cs" />
-    <Compile Include="Comms\Ftp.cs" />
+    <Compile Include="Comms\ApiClient.cs" />
+    <Compile Include="Comms\FtpClient.cs" />
     <Compile Include="Comms\RemoteConnectionFactory.cs" />
-    <Compile Include="Comms\Sftp.cs" />
+    <Compile Include="Comms\SecureFtpClient.cs" />
     <Compile Include="Constants\InvoiceTemplateConst.cs" />
     <Compile Include="ImportApplicationConfigurationForm.cs">
       <SubType>Form</SubType>
@@ -74,7 +74,7 @@
     </Compile>
     <Compile Include="CsvParser.cs" />
     <Compile Include="InvoiceTemplateModel.cs" />
-    <Compile Include="Comms\ITransferProtocol.cs" />
+    <Compile Include="Comms\IClientTransferProtocol.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -82,6 +82,12 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="RemoteDownloadDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RemoteDownloadDialog.Designer.cs">
+      <DependentUpon>RemoteDownloadDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="RemoteInvoiceConnectionInfo.cs" />
     <Compile Include="TemplateEditor.cs">
@@ -97,11 +103,14 @@
     <Compile Include="Transformer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="xml\InvoiceImportTemplates.xml">
+    <Content Include="InvoiceImportTemplates.xml">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="invoiceTransform.ico" />
+    <EmbeddedResource Include="RemoteDownloadDialog.resx">
+      <DependentUpon>RemoteDownloadDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Scripts\USFoodsScript.sql" />
     <EmbeddedResource Include="ImportApplicationConfigurationForm.resx">
       <DependentUpon>ImportApplicationConfigurationForm.cs</DependentUpon>

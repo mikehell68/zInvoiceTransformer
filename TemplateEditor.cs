@@ -3,9 +3,10 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using System;
-using ZinvoiceTransformer.Comms;
+using System.IO;
+using zInvoiceTransformer.Comms;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     public partial class TemplateEditor : Form
     {
@@ -274,7 +275,10 @@ namespace ZinvoiceTransformer
 
         private void _selectKeyfileLocationButton_Click(object sender, System.EventArgs e)
         {
-            _folderDialog.RootFolder = Environment.SpecialFolder.Desktop;
+            _folderDialog.Description = "Select the location of the keyfile required for this service.";
+            _folderDialog.SelectedPath = Directory.Exists(_keyfileLocationTextbox.Text) ? 
+                                        _keyfileLocationTextbox.Text : 
+                                        Environment.SpecialFolder.Desktop.ToString();
             if (_folderDialog.ShowDialog(this) == DialogResult.OK)
                 _keyfileLocationTextbox.Text = _folderDialog.SelectedPath;
         }
@@ -282,8 +286,10 @@ namespace ZinvoiceTransformer
         private void _testRemoteTransferProtocolButton_Click(object sender, System.EventArgs e)
         {
             // TODO: Hook up server connection
+            //_invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
             var rc = RemoteConnectionFactory.Build((int)_protocolTypeComboBox.SelectedValue);
-            var connected = rc.CheckConnection(_urlTextbox.Text, Convert.ToInt32(_portTextbox.Text), _usernameTextbox.Text, _passwordTextbox.Text);
+            rc.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
+            var connected = rc.CheckConnection();
 
             MessageBox.Show(this,$"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"), "Test Connection", MessageBoxButtons.OK);
         }

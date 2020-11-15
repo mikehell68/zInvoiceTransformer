@@ -1,26 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ZinvoiceTransformer.Comms
+namespace zInvoiceTransformer.Comms
 {
-    public class Api : ITransferProtocol
+    public class ApiClient : IClientTransferProtocol
     {
-        public bool CheckConnection(string host, int port, string username, string password)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CheckConnection()
-        {
-            throw new NotImplementedException();
-        }
+        public RemoteInvoiceConnectionInfo RemoteConnectionInfo { get; set; }
 
         public bool CheckConnection(RemoteInvoiceConnectionInfo remoteInvoiceConnectionInfo)
         {
             throw new NotImplementedException();
         }
 
-        public List<string> ListFiles()
+        public bool CheckConnection()
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetFileList()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DownloadFiles(List<string> filesToDownload)
         {
             throw new NotImplementedException();
         }

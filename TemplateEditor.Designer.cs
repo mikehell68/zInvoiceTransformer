@@ -1,4 +1,4 @@
-﻿namespace ZinvoiceTransformer
+﻿namespace zInvoiceTransformer
 {
     partial class TemplateEditor
     {
@@ -84,6 +84,8 @@
             this.label11 = new System.Windows.Forms.Label();
             this._templateRemoteInvoiveSettingsTabPage = new System.Windows.Forms.TabPage();
             this._remoteInvoiceMainPanel = new System.Windows.Forms.Panel();
+            this._remoteFolderTextbox = new System.Windows.Forms.TextBox();
+            this._remoteFolderLabel = new System.Windows.Forms.Label();
             this._invoiceFilePrefixTextBox = new System.Windows.Forms.TextBox();
             this._invoiceFilePrefixLabel = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
@@ -115,8 +117,6 @@
             this._folderDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            this._remoteFolderTextbox = new System.Windows.Forms.TextBox();
-            this._remoteFolderLabel = new System.Windows.Forms.Label();
             this._mainPanel.SuspendLayout();
             this._templateDetailPanel.SuspendLayout();
             this._templateAttributesPanel.SuspendLayout();
@@ -815,6 +815,24 @@
             this._remoteInvoiceMainPanel.Size = new System.Drawing.Size(670, 665);
             this._remoteInvoiceMainPanel.TabIndex = 0;
             // 
+            // _remoteFolderTextbox
+            // 
+            this._remoteFolderTextbox.Location = new System.Drawing.Point(180, 287);
+            this._remoteFolderTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this._remoteFolderTextbox.Name = "_remoteFolderTextbox";
+            this._remoteFolderTextbox.Size = new System.Drawing.Size(280, 26);
+            this._remoteFolderTextbox.TabIndex = 7;
+            // 
+            // _remoteFolderLabel
+            // 
+            this._remoteFolderLabel.AutoSize = true;
+            this._remoteFolderLabel.Location = new System.Drawing.Point(36, 290);
+            this._remoteFolderLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._remoteFolderLabel.Name = "_remoteFolderLabel";
+            this._remoteFolderLabel.Size = new System.Drawing.Size(119, 20);
+            this._remoteFolderLabel.TabIndex = 16;
+            this._remoteFolderLabel.Text = "Remote Folder:";
+            // 
             // _invoiceFilePrefixTextBox
             // 
             this._invoiceFilePrefixTextBox.Location = new System.Drawing.Point(180, 46);
@@ -846,10 +864,10 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(468, 321);
+            this.button1.Location = new System.Drawing.Point(468, 323);
             this.button1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(64, 26);
+            this.button1.Size = new System.Drawing.Size(39, 31);
             this.button1.TabIndex = 9;
             this.button1.Text = "...";
             this.button1.UseVisualStyleBackColor = true;
@@ -944,7 +962,7 @@
             this._urlLabel.Name = "_urlLabel";
             this._urlLabel.Size = new System.Drawing.Size(33, 20);
             this._urlLabel.TabIndex = 2;
-            this._urlLabel.Text = "Url:";
+            this._urlLabel.Text = "HostUrl:";
             // 
             // _protocolTypeComboBox
             // 
@@ -1099,24 +1117,6 @@
             this._newTemplateButton.Text = "New";
             this._newTemplateButton.UseVisualStyleBackColor = true;
             this._newTemplateButton.Click += new System.EventHandler(this._newTemplate_Click);
-            // 
-            // _remoteFolderTextbox
-            // 
-            this._remoteFolderTextbox.Location = new System.Drawing.Point(180, 287);
-            this._remoteFolderTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this._remoteFolderTextbox.Name = "_remoteFolderTextbox";
-            this._remoteFolderTextbox.Size = new System.Drawing.Size(280, 26);
-            this._remoteFolderTextbox.TabIndex = 7;
-            // 
-            // _remoteFolderLabel
-            // 
-            this._remoteFolderLabel.AutoSize = true;
-            this._remoteFolderLabel.Location = new System.Drawing.Point(36, 290);
-            this._remoteFolderLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._remoteFolderLabel.Name = "_remoteFolderLabel";
-            this._remoteFolderLabel.Size = new System.Drawing.Size(119, 20);
-            this._remoteFolderLabel.TabIndex = 16;
-            this._remoteFolderLabel.Text = "Remote Folder:";
             // 
             // TemplateEditor
             // 

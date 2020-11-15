@@ -1,4 +1,4 @@
-﻿namespace ZinvoiceTransformer
+﻿namespace zInvoiceTransformer
 {
     partial class ImportApplicationConfigurationForm
     {

@@ -8,7 +8,7 @@ using System.Text;
 using System.Xml.Linq;
 using LogThis;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     public enum FieldRecordLocation
     {

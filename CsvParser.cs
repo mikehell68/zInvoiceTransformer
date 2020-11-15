@@ -3,7 +3,7 @@
 using System.Text;
 using System.Collections;
 
-namespace ZinvoiceTransformer
+namespace zInvoiceTransformer
 {
     internal class CsvParser
     {

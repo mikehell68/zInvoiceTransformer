@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ZinvoiceTransformer.Properties {
+namespace zInvoiceTransformer.Properties {
     using System;
     
     
