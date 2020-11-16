@@ -120,7 +120,7 @@ namespace zInvoiceTransformer
 
         private void _downloadFilesButton_Click(object sender, EventArgs e)
         {
-            var x = _filesCheckedListBox.SelectedItems.Cast<string>().ToList();
+            var x = _filesCheckedListBox.CheckedItems.Cast<string>().ToList();
             ConnectAndDownloadSelectedFiles(x);
         }
     }

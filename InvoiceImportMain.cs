@@ -323,10 +323,11 @@ namespace zInvoiceTransformer
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            //if (_clientTransferProtocol.CheckConnection(_invoiceTemplateModel.GetSelectedTemplateConnectionInfo()))
-            //{
-            //    //_clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
-            //}
+            InitialiseClientConnectionDetails();
+            if (_clientTransferProtocol.CheckConnection())
+            {
+                _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201115.log");
+            }
         }
     }
 }
