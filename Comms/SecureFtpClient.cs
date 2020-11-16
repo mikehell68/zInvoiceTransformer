@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Renci.SshNet;
 
 namespace zInvoiceTransformer.Comms
@@ -67,12 +69,11 @@ namespace zInvoiceTransformer.Comms
                     sftp.Connect();
 
                     var files = sftp.ListDirectory(remoteDirectory);
-                    //files = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+"));
+                    files = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+"));
 
                     foreach (var file in files)
                     {
                         filelist.Add(file.Name);
-                        Console.WriteLine(file.Name);
                     }
 
                     sftp.Disconnect();
@@ -87,7 +88,36 @@ namespace zInvoiceTransformer.Comms
 
         public void DownloadFiles(List<string> filesToDownload)
         {
-            throw new NotImplementedException();
+            string remoteFolder = RemoteConnectionInfo.RemoteFolder;
+            string destinationFolder = RemoteConnectionInfo.DestinationFolder;
+            
+            try
+            {
+                using (var sftpClient = new SftpClient(_connectionInfo))
+                {
+                    sftpClient.Connect();
+
+                    foreach (var file in filesToDownload)
+                    {
+                        using (var fs = new FileStream(Path.Combine(destinationFolder, file), FileMode.OpenOrCreate))
+                        { 
+                            sftpClient.DownloadFile(
+                                Path.Combine(remoteFolder, file).Replace('\\', '/'),
+                                fs,
+                                downloaded =>
+                                {
+                                    Console.WriteLine(
+                                        $"Downloaded {(double) downloaded / fs.Length * 100}% of the file.");
+                                });
+                        }
+                    }
+                    sftpClient.Disconnect();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public void UploadFile(string fileToUpload)

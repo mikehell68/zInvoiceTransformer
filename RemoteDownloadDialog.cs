@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Windows.Forms;
 using zInvoiceTransformer.Comms;
 
@@ -19,7 +19,11 @@ namespace zInvoiceTransformer
             _invoiceTemplateModel = invoiceTemplateModel;
             _clientTransferProtocol = clientTransferProtocol;
             _getFilesBackgroundWorker.WorkerReportsProgress = true;
-            
+            PopulateRemoteConnectionLabels();
+        }
+
+        private void PopulateRemoteConnectionLabels()
+        {
             _hostLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.HostUrl;
             _destinationLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.DestinationFolder;
             _portLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.Port.ToString();
@@ -60,6 +64,14 @@ namespace zInvoiceTransformer
             }
             
             _getFilesBackgroundWorker.ReportProgress(75, "Fetching remote file names - complete");
+        }
+
+        void ConnectAndDownloadSelectedFiles(List<string> selectedFiles)
+        {
+            if (_clientTransferProtocol.CheckConnection())
+            {
+                _clientTransferProtocol.DownloadFiles(selectedFiles);
+            }
         }
 
         void GetFilesBackgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
@@ -104,6 +116,12 @@ namespace zInvoiceTransformer
             {
                 _filesCheckedListBox.SetItemChecked(item, _selectAllCheckBox.Checked);
             }
+        }
+
+        private void _downloadFilesButton_Click(object sender, EventArgs e)
+        {
+            var x = _filesCheckedListBox.SelectedItems.Cast<string>().ToList();
+            ConnectAndDownloadSelectedFiles(x);
         }
     }
 }

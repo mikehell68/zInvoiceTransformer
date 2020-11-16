@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RemoteDownloadDialog));
             this._mainPanel = new System.Windows.Forms.Panel();
             this._fileListPanel = new System.Windows.Forms.Panel();
+            this._progressLabel = new System.Windows.Forms.Label();
             this._progressBar = new System.Windows.Forms.ProgressBar();
             this.label1 = new System.Windows.Forms.Label();
             this._selectAllCheckBox = new System.Windows.Forms.CheckBox();
@@ -49,7 +50,6 @@
             this._downloadFilesButton = new System.Windows.Forms.Button();
             this._refreshListButton = new System.Windows.Forms.Button();
             this._getFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
-            this._progressLabel = new System.Windows.Forms.Label();
             this._mainPanel.SuspendLayout();
             this._fileListPanel.SuspendLayout();
             this._infoPanel.SuspendLayout();
@@ -79,6 +79,15 @@
             this._fileListPanel.Name = "_fileListPanel";
             this._fileListPanel.Size = new System.Drawing.Size(403, 377);
             this._fileListPanel.TabIndex = 2;
+            // 
+            // _progressLabel
+            // 
+            this._progressLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this._progressLabel.AutoSize = true;
+            this._progressLabel.Location = new System.Drawing.Point(13, 337);
+            this._progressLabel.Name = "_progressLabel";
+            this._progressLabel.Size = new System.Drawing.Size(0, 20);
+            this._progressLabel.TabIndex = 4;
             // 
             // _progressBar
             // 
@@ -246,6 +255,7 @@
             this._downloadFilesButton.TabIndex = 0;
             this._downloadFilesButton.Text = "Download Files";
             this._downloadFilesButton.UseVisualStyleBackColor = true;
+            this._downloadFilesButton.Click += new System.EventHandler(this._downloadFilesButton_Click);
             // 
             // _refreshListButton
             // 
@@ -262,15 +272,6 @@
             this._getFilesBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.GetFilesBackgroundWorker_DoWork);
             this._getFilesBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.GetFilesBackgroundWorker_ProgressChanged);
             this._getFilesBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.GetFilesBackgroundWorker_RunWorkerCompleted);
-            // 
-            // _progressLabel
-            // 
-            this._progressLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this._progressLabel.AutoSize = true;
-            this._progressLabel.Location = new System.Drawing.Point(13, 337);
-            this._progressLabel.Name = "_progressLabel";
-            this._progressLabel.Size = new System.Drawing.Size(0, 20);
-            this._progressLabel.TabIndex = 4;
             // 
             // RemoteDownloadDialog
             // 
