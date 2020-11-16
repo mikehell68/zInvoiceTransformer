@@ -10,12 +10,7 @@ namespace zInvoiceTransformer
     {
         IClientTransferProtocol _clientTransferProtocol;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
-
         private List<string> _fileList;
-        //public RemoteDownloadDialog()
-        //{
-        //    InitializeComponent();
-        //}
 
         public RemoteDownloadDialog(InvoiceTemplateModel invoiceTemplateModel)
         {
@@ -25,36 +20,37 @@ namespace zInvoiceTransformer
             InitialiseClientConnectionDetails();
         }
 
-        private void InitialiseClientConnectionDetails()
+        void InitialiseClientConnectionDetails()
         {
             if(_invoiceTemplateModel != null)
                 _clientTransferProtocol = RemoteConnectionFactory.Build(
-                Convert.ToInt32(
-                    _invoiceTemplateModel.SelectedTemplate
+                    Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
                         ?.Element("RemoteInvoiceSettings")
                         ?.Attribute("RemoteTransferProtocolTypeId")
                         ?.Value ?? "0"));
         }
 
-        private void RemoteDownloadDialog_Shown(object sender, EventArgs e)
+        void RemoteDownloadDialog_Shown(object sender, EventArgs e)
         {
             StartGetFileListBackgroundWorker();
         }
 
         void StartGetFileListBackgroundWorker()
         {
-            if(_getFilesBackgroundWorker.IsBusy)
+            if (_getFilesBackgroundWorker.IsBusy)
                 return;
-            
+
+            ClearFileList();
+            SetUiProgressState(0, true, false);
+
+            _getFilesBackgroundWorker.RunWorkerAsync();
+        }
+
+        void ClearFileList()
+        {
+            _selectAllCheckBox.Checked = false;
             _filesCheckedListBox.Items.Clear();
             _fileList?.Clear();
-            progressBar1.Value = 0;
-            _getFilesBackgroundWorker.RunWorkerAsync();
-            //while (_getFilesBackgroundWorker.IsBusy)
-            //{
-            //    progressBar1.Increment(1);
-            //    Application.DoEvents();
-            //}
         }
 
         void ConnectAndGetFiles()
@@ -62,51 +58,56 @@ namespace zInvoiceTransformer
             _getFilesBackgroundWorker.ReportProgress(10);
             _clientTransferProtocol.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
             _getFilesBackgroundWorker.ReportProgress(20);
+
             if (_clientTransferProtocol.CheckConnection())
             {
                 _getFilesBackgroundWorker.ReportProgress(50);
                 _fileList = _clientTransferProtocol.GetFileList();
             }
+            
             _getFilesBackgroundWorker.ReportProgress(75);
         }
 
-        private void _getFilesBackgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        void GetFilesBackgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            
-            try
-            {
-                ConnectAndGetFiles();
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception);
-            }
-            finally
-            {
-                Cursor.Current = Cursors.Default;
-            }
+            ConnectAndGetFiles();
         }
 
-        private void _getFilesBackgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        void GetFilesBackgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
+            SetUiProgressState(100, false, true);
+            
             if (_fileList == null || _fileList.Count == 0)
-                MessageBox.Show(this, "No files found", "Remote Files");
+                MessageBox.Show(this, "No files found", "Remote File Download");
             else
             {
                 _filesCheckedListBox.Items.AddRange(_fileList.ToArray());
             }
-            progressBar1.Value = 100;
         }
 
-        private void _getFilesBackgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        void SetUiProgressState(int progressPercent, bool useWaitCursor, bool uiEnabled)
+        {
+            progressBar1.Value = progressPercent;
+            Application.UseWaitCursor = useWaitCursor;
+            _mainPanel.Enabled = uiEnabled;
+        }
+
+        void GetFilesBackgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
         {
             progressBar1.Value = e.ProgressPercentage;
         }
 
-        private void _refreshListButton_Click(object sender, EventArgs e)
+        void RefreshListButton_Click(object sender, EventArgs e)
         {
             StartGetFileListBackgroundWorker();
+        }
+
+        private void _selectAllCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            for (int item = 0; item < _filesCheckedListBox.Items.Count; item++)
+            {
+                _filesCheckedListBox.SetItemChecked(item, _selectAllCheckBox.Checked);
+            }
         }
     }
 }
