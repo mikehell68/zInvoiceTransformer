@@ -12,7 +12,8 @@ namespace zInvoiceTransformer
         readonly InvoiceTemplateModel _invoiceTemplateModel;
         private List<string> _fileList;
 
-        public RemoteDownloadDialog(InvoiceTemplateModel invoiceTemplateModel)
+        public RemoteDownloadDialog(InvoiceTemplateModel invoiceTemplateModel,
+            IClientTransferProtocol clientTransferProtocol)
         {
             InitializeComponent();
             _invoiceTemplateModel = invoiceTemplateModel;
@@ -28,6 +29,25 @@ namespace zInvoiceTransformer
                         ?.Element("RemoteInvoiceSettings")
                         ?.Attribute("RemoteTransferProtocolTypeId")
                         ?.Value ?? "0"));
+
+            if (_clientTransferProtocol == null)
+            {
+                MessageBox.Show(this,
+                    "The selected provider has not been configured for remote invoice downloads. Check template settings.",
+                    "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
+            }
+
+            _clientTransferProtocol.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
+            if (_clientTransferProtocol.RemoteConnectionInfo == null)
+            {
+                MessageBox.Show(this,
+                    "Cannot find connection details for the selected provider. Check template settings.",
+                    "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Close();
+            }
         }
 
         void RemoteDownloadDialog_Shown(object sender, EventArgs e)
@@ -55,8 +75,6 @@ namespace zInvoiceTransformer
 
         void ConnectAndGetFiles()
         {
-            _getFilesBackgroundWorker.ReportProgress(10);
-            _clientTransferProtocol.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
             _getFilesBackgroundWorker.ReportProgress(20);
 
             if (_clientTransferProtocol.CheckConnection())

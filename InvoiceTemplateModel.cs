@@ -192,19 +192,28 @@ namespace zInvoiceTransformer
 
         public RemoteInvoiceConnectionInfo GetSelectedTemplateConnectionInfo()
         {
-            if (SelectedTemplate != null)
-                return new RemoteInvoiceConnectionInfo
-                {
-                    DestinationFolder = SelectedTemplate.Attribute("SourceFolder").Value,
-                    InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("InvoiceFileCustomerPrefix").Value,
-                    HostUrl = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
-                    Port = Convert.ToInt32(SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("port").Value),
-                    Username = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("username").Value,
-                    Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value,
-                    RemoteFolder = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("RemoteFolder").Value
-                };
+            try
+            {
+                if (SelectedTemplate != null)
+                    return new RemoteInvoiceConnectionInfo
+                    {
+                        DestinationFolder = SelectedTemplate.Attribute("SourceFolder").Value,
+                        InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("InvoiceFileCustomerPrefix").Value,
+                        HostUrl = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
+                        Port = Convert.ToInt32(SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("port").Value),
+                        Username = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("username").Value,
+                        Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value,
+                        RemoteFolder = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("RemoteFolder").Value
+                    };
 
-            return new RemoteInvoiceConnectionInfo();
+                Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);
+                return null;
+            }
+            catch (Exception e)
+            {
+                Log.LogThis($"Unable to create RemoteInvoiceConnectionInfo, check invoice template: {e.Message}", eloglevel.error);
+                return null;
+            }
         }
 
         //void SaveTemplates()

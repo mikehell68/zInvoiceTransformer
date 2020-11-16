@@ -15,6 +15,7 @@ namespace zInvoiceTransformer
         string _errorMsg = "";
         string _infoMsg = "";
         private static InvoiceTemplateModel _invoiceTemplateModel;
+        IClientTransferProtocol _clientTransferProtocol;
 
         public InvoiceImportMain()
         {
@@ -274,8 +275,50 @@ namespace zInvoiceTransformer
 
         private void OnGetRemoteInvoicesClick(object sender, EventArgs e)
         {
-            var fileDownloadDialog = new RemoteDownloadDialog(_invoiceTemplateModel);
-            fileDownloadDialog.ShowDialog(this);
+            InitialiseClientConnectionDetails();
+            if (_invoiceTemplateModel != null && 
+                _clientTransferProtocol != null &&
+                _clientTransferProtocol.RemoteConnectionInfo != null)
+            {
+                var fileDownloadDialog = new RemoteDownloadDialog(_invoiceTemplateModel, _clientTransferProtocol);
+                fileDownloadDialog.ShowDialog(this);
+            }
+        }
+
+        void InitialiseClientConnectionDetails()
+        {
+            if (_invoiceTemplateModel == null)
+            {
+                MessageBox.Show(this,
+                    "The selected provider does not have a template definition. Check template settings.",
+                    "Invoice Template Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            
+            _clientTransferProtocol = RemoteConnectionFactory.Build(
+                Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
+                                    ?.Element("RemoteInvoiceSettings")
+                                    ?.Attribute("RemoteTransferProtocolTypeId")
+                                    ?.Value ?? "0"));
+
+            if (_clientTransferProtocol == null)
+            {
+                MessageBox.Show(this,
+                    "The selected provider has not been configured for remote invoice downloads. Check template settings.",
+                    "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _clientTransferProtocol.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
+            if (_clientTransferProtocol.RemoteConnectionInfo == null)
+            {
+                MessageBox.Show(this,
+                    "Cannot find connection details for the selected provider. Check template settings.",
+                    "Connection Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void Button1_Click(object sender, EventArgs e)
