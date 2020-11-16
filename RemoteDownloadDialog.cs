@@ -17,37 +17,13 @@ namespace zInvoiceTransformer
         {
             InitializeComponent();
             _invoiceTemplateModel = invoiceTemplateModel;
+            _clientTransferProtocol = clientTransferProtocol;
             _getFilesBackgroundWorker.WorkerReportsProgress = true;
-            InitialiseClientConnectionDetails();
-        }
-
-        void InitialiseClientConnectionDetails()
-        {
-            if(_invoiceTemplateModel != null)
-                _clientTransferProtocol = RemoteConnectionFactory.Build(
-                    Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
-                        ?.Element("RemoteInvoiceSettings")
-                        ?.Attribute("RemoteTransferProtocolTypeId")
-                        ?.Value ?? "0"));
-
-            if (_clientTransferProtocol == null)
-            {
-                MessageBox.Show(this,
-                    "The selected provider has not been configured for remote invoice downloads. Check template settings.",
-                    "Connection Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Close();
-            }
-
-            _clientTransferProtocol.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
-            if (_clientTransferProtocol.RemoteConnectionInfo == null)
-            {
-                MessageBox.Show(this,
-                    "Cannot find connection details for the selected provider. Check template settings.",
-                    "Connection Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                Close();
-            }
+            
+            _hostLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.HostUrl;
+            _destinationLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.DestinationFolder;
+            _portLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.Port.ToString();
+            _remoteLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.RemoteFolder;
         }
 
         void RemoteDownloadDialog_Shown(object sender, EventArgs e)
@@ -73,22 +49,22 @@ namespace zInvoiceTransformer
             _fileList?.Clear();
         }
 
-        void ConnectAndGetFiles()
+        void ConnectAndGetFileList()
         {
-            _getFilesBackgroundWorker.ReportProgress(20);
+            _getFilesBackgroundWorker.ReportProgress(20, "Checking Connection");
 
             if (_clientTransferProtocol.CheckConnection())
             {
-                _getFilesBackgroundWorker.ReportProgress(50);
+                _getFilesBackgroundWorker.ReportProgress(50, "Fetching remote file names");
                 _fileList = _clientTransferProtocol.GetFileList();
             }
             
-            _getFilesBackgroundWorker.ReportProgress(75);
+            _getFilesBackgroundWorker.ReportProgress(75, "Fetching remote file names - complete");
         }
 
         void GetFilesBackgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            ConnectAndGetFiles();
+            ConnectAndGetFileList();
         }
 
         void GetFilesBackgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -105,14 +81,16 @@ namespace zInvoiceTransformer
 
         void SetUiProgressState(int progressPercent, bool useWaitCursor, bool uiEnabled)
         {
-            progressBar1.Value = progressPercent;
+            _progressLabel.Text = "";
+            _progressBar.Value = progressPercent;
             Application.UseWaitCursor = useWaitCursor;
             _mainPanel.Enabled = uiEnabled;
         }
 
         void GetFilesBackgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
         {
-            progressBar1.Value = e.ProgressPercentage;
+            _progressBar.Value = e.ProgressPercentage;
+            _progressLabel.Text = e.UserState.ToString();
         }
 
         void RefreshListButton_Click(object sender, EventArgs e)
