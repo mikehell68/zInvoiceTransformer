@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Renci.SshNet.Sftp;
 
 namespace zInvoiceTransformer.Comms
 {
@@ -17,12 +18,17 @@ namespace zInvoiceTransformer.Comms
             throw new NotImplementedException();
         }
 
-        public List<string> GetFileList()
+        public List<SftpFile> GetFileList()
         {
             throw new NotImplementedException();
         }
 
         public void DownloadFiles(List<string> filesToDownload)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DownloadFiles(List<SftpFile> filesToDownload, Action<long> progressAction)
         {
             throw new NotImplementedException();
         }

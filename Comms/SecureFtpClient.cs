@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Renci.SshNet;
+using Renci.SshNet.Sftp;
 
 namespace zInvoiceTransformer.Comms
 {
@@ -57,10 +58,10 @@ namespace zInvoiceTransformer.Comms
         /// <summary>
         /// List a remote directory in the console.
         /// </summary>
-        public List<string> GetFileList()
+        public List<SftpFile> GetFileList()
         {
             string remoteDirectory = RemoteConnectionInfo.RemoteFolder;
-            var filelist = new List<string>();
+            var fileList = new List<SftpFile>();
 
             using (var sftp = new SftpClient(_connectionInfo))
             {
@@ -68,13 +69,7 @@ namespace zInvoiceTransformer.Comms
                 {
                     sftp.Connect();
 
-                    var files = sftp.ListDirectory(remoteDirectory);
-                    files = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+"));
-
-                    foreach (var file in files)
-                    {
-                        filelist.Add(file.Name);
-                    }
+                    fileList = sftp.ListDirectory(remoteDirectory).Where(f => !Regex.IsMatch(f.Name, @"^\.+")).ToList();
 
                     sftp.Disconnect();
                 }
@@ -83,7 +78,7 @@ namespace zInvoiceTransformer.Comms
                     Console.WriteLine("An exception has been caught " + e.ToString());
                 }
             }
-            return filelist;
+            return fileList;
         }
 
         public void DownloadFiles(List<string> filesToDownload)
@@ -109,6 +104,36 @@ namespace zInvoiceTransformer.Comms
                                     Console.WriteLine(
                                         $"Downloaded {(double) downloaded / fs.Length * 100}% of the file.");
                                 });
+                        }
+                    }
+                    sftpClient.Disconnect();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        public void DownloadFiles(List<SftpFile> filesToDownload, Action<long> progressAction)
+        {
+            string remoteFolder = RemoteConnectionInfo.RemoteFolder;
+            string destinationFolder = RemoteConnectionInfo.DestinationFolder;
+
+            try
+            {
+                using (var sftpClient = new SftpClient(_connectionInfo))
+                {
+                    sftpClient.Connect();
+
+                    foreach (var file in filesToDownload)
+                    {
+                        using (var fs = new FileStream(Path.Combine(destinationFolder, file.Name), FileMode.OpenOrCreate))
+                        {
+                            sftpClient.DownloadFile(
+                                Path.Combine(remoteFolder, file.Name).Replace('\\', '/'),
+                                fs,
+                                downloaded => progressAction((long)downloaded / filesToDownload.Count));
                         }
                     }
                     sftpClient.Disconnect();
