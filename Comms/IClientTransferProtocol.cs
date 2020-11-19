@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Renci.SshNet.Sftp;
 
 namespace zInvoiceTransformer.Comms
 {
@@ -6,8 +8,9 @@ namespace zInvoiceTransformer.Comms
     {
         RemoteInvoiceConnectionInfo RemoteConnectionInfo { get; set; }
         bool CheckConnection();
-        List<string> GetFileList();
+        List<SftpFile> GetFileList();
         void DownloadFiles(List<string> filesToDownload);
+        void DownloadFiles(List<SftpFile> filesToDownload, Action<long> progressAction);
         void UploadFile(string fileToUpload);
     }
 }

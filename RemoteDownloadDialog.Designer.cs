@@ -50,6 +50,7 @@
             this._downloadFilesButton = new System.Windows.Forms.Button();
             this._refreshListButton = new System.Windows.Forms.Button();
             this._getFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this._downloadFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this._mainPanel.SuspendLayout();
             this._fileListPanel.SuspendLayout();
             this._infoPanel.SuspendLayout();
@@ -293,6 +294,12 @@
             this._getFilesBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.GetFilesBackgroundWorker_ProgressChanged);
             this._getFilesBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.GetFilesBackgroundWorker_RunWorkerCompleted);
             // 
+            // _downloadFilesBackgroundWorker
+            // 
+            this._downloadFilesBackgroundWorker.WorkerReportsProgress = true;
+            this._downloadFilesBackgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this._downloadFilesBackgroundWorker_DoWork);
+            this._downloadFilesBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this._downloadFilesBackgroundWorker_ProgressChanged);
+            // 
             // RemoteDownloadDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -343,5 +350,6 @@
         private System.ComponentModel.BackgroundWorker _getFilesBackgroundWorker;
         private System.Windows.Forms.ProgressBar _progressBar;
         private System.Windows.Forms.Label _progressLabel;
+        private System.ComponentModel.BackgroundWorker _downloadFilesBackgroundWorker;
     }
 }
