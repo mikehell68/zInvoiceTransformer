@@ -70,14 +70,13 @@ namespace zInvoiceTransformer.Comms
                 {
                     sftp.Connect();
 
-                    var files = sftp.ListDirectory(remoteDirectory);
-                    fileList = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+") && 
-                                             !f.IsDirectory && 
-                                             !f.IsSymbolicLink && 
-                                             f.IsRegularFile && 
-                                             f.Name.Contains(filenameFilter));
-
-                    sftp.Disconnect();
+                    fileList = sftp.ListDirectory(remoteDirectory).
+                        Where(f => !Regex.IsMatch(f.Name, @"^\.+") &&
+                                   !f.IsDirectory &&
+                                   !f.IsSymbolicLink &&
+                                   f.IsRegularFile &&
+                                   f.Name.Contains(filenameFilter)).ToList();
+                   sftp.Disconnect();
                 }
                 catch (Exception e)
                 {
