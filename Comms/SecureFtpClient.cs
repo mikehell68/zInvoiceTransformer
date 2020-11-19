@@ -59,7 +59,8 @@ namespace zInvoiceTransformer.Comms
         /// </summary>
         public List<string> GetFileList()
         {
-            string remoteDirectory = RemoteConnectionInfo.RemoteFolder;
+            var remoteDirectory = RemoteConnectionInfo.RemoteFolder;
+            var filenameFilter = RemoteConnectionInfo.InvoiceFilePrefix ?? "";
             var filelist = new List<string>();
 
             using (var sftp = new SftpClient(_connectionInfo))
@@ -69,7 +70,11 @@ namespace zInvoiceTransformer.Comms
                     sftp.Connect();
 
                     var files = sftp.ListDirectory(remoteDirectory);
-                    files = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+"));
+                    files = files.Where(f => !Regex.IsMatch(f.Name, @"^\.+") && 
+                                             !f.IsDirectory && 
+                                             !f.IsSymbolicLink && 
+                                             f.IsRegularFile && 
+                                             f.Name.Contains(filenameFilter));
 
                     foreach (var file in files)
                     {
