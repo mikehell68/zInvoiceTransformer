@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Renci.SshNet.Sftp;
 using zInvoiceTransformer.Comms;
@@ -10,17 +9,16 @@ namespace zInvoiceTransformer
 {
     public partial class RemoteDownloadDialog : Form
     {
-        IClientTransferProtocol _clientTransferProtocol;
-        readonly InvoiceTemplateModel _invoiceTemplateModel;
-        private List<SftpFile> _fileList;
+        readonly IClientTransferProtocol _clientTransferProtocol;
+        List<SftpFile> _fileList;
+        long _totalBytesToDownload = 0;
 
         public RemoteDownloadDialog(InvoiceTemplateModel invoiceTemplateModel,
             IClientTransferProtocol clientTransferProtocol)
         {
             InitializeComponent();
-            _invoiceTemplateModel = invoiceTemplateModel;
             _clientTransferProtocol = clientTransferProtocol;
-            _getFilesBackgroundWorker.WorkerReportsProgress = true;
+            //_getFilesBackgroundWorker.WorkerReportsProgress = true;
             PopulateRemoteConnectionLabels();
         }
 
@@ -43,9 +41,19 @@ namespace zInvoiceTransformer
                 return;
 
             ClearFileList();
-            SetUiProgressState(0, true, false);
+            SetUiProgressState(true, false, null, 0);
 
             _getFilesBackgroundWorker.RunWorkerAsync();
+        }
+
+        void StartFileDownloadBackgroundWorker()
+        {
+            if (_downloadFilesBackgroundWorker.IsBusy)
+                return;
+
+            SetUiProgressState(true, false, null, 0);
+
+            _downloadFilesBackgroundWorker.RunWorkerAsync();
         }
 
         void ClearFileList()
@@ -66,13 +74,15 @@ namespace zInvoiceTransformer
             }
             
             _getFilesBackgroundWorker.ReportProgress(75, "Fetching remote file names - complete");
+            _totalBytesToDownload = _fileList.Sum(f => f.Length);
         }
 
         void ConnectAndDownloadSelectedFiles(List<SftpFile> selectedFiles)
         {
+            _downloadFilesBackgroundWorker.ReportProgress(0, "Checking Connection");
             if (_clientTransferProtocol.CheckConnection())
             {
-                _clientTransferProtocol.DownloadFiles(selectedFiles, UpdateProgressBar);
+                _clientTransferProtocol.DownloadFiles(selectedFiles, progress => UpdateProgressBar(progress));
             }
         }
 
@@ -83,7 +93,7 @@ namespace zInvoiceTransformer
 
         void GetFilesBackgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
-            SetUiProgressState(100, false, true);
+            SetUiProgressState(false, true, null, 100);
             
             if (_fileList == null || _fileList.Count == 0)
                 MessageBox.Show(this, "No files found", "Remote File Download");
@@ -93,10 +103,14 @@ namespace zInvoiceTransformer
             }
         }
 
-        void SetUiProgressState(int progressPercent, bool useWaitCursor, bool uiEnabled)
+        void SetUiProgressState(bool useWaitCursor, bool uiEnabled, string progressText = null, int progressPercent = -1)
         {
-            _progressLabel.Text = "";
-            _progressBar.Value = progressPercent;
+            if(progressText != null)
+                _progressLabel.Text = progressText;
+
+            if(progressPercent >= 0)
+                _progressBar.Value = progressPercent;
+            
             Application.UseWaitCursor = useWaitCursor;
             _mainPanel.Enabled = uiEnabled;
         }
@@ -122,25 +136,33 @@ namespace zInvoiceTransformer
 
         private void _downloadFilesButton_Click(object sender, EventArgs e)
         {
-            _progressBar.Maximum = (int)_fileList.Sum(f => f.Length);
-            _downloadFilesBackgroundWorker.RunWorkerAsync();
+            _progressBar.Maximum = 100;
+            StartFileDownloadBackgroundWorker();
         }
 
-        void UpdateProgressBar(long progress)
+        void UpdateProgressBar(decimal progress)
         {
-            if(progress > 0)
-                _downloadFilesBackgroundWorker.ReportProgress(_progressBar.Maximum / (int)progress * 100);
+            if(progress > 0) 
+                _downloadFilesBackgroundWorker.ReportProgress((int)(progress / _totalBytesToDownload * 100), "Downloading...");
         }
 
         private void _downloadFilesBackgroundWorker_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
         {
             _progressBar.Value = e.ProgressPercentage;
+            _progressLabel.Text = e.UserState.ToString();
         }
 
         private void _downloadFilesBackgroundWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
             var x = _filesCheckedListBox.CheckedItems.Cast<string>().ToList();
             ConnectAndDownloadSelectedFiles(_fileList.Where(f => x.Contains(f.Name)).ToList());
+        }
+
+        private void _downloadFilesBackgroundWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        {
+            SetUiProgressState(false, true);
+            _progressLabel.Text += " complete";
+            //_downloadFilesBackgroundWorker.ReportProgress(100, _progressLabel.Text+" - complete");
         }
     }
 }

@@ -326,7 +326,7 @@ namespace zInvoiceTransformer
             InitialiseClientConnectionDetails();
             if (_clientTransferProtocol.CheckConnection())
             {
-                _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201115.log");
+                _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
             }
         }
     }

@@ -76,7 +76,8 @@ namespace zInvoiceTransformer.Comms
                                    !f.IsSymbolicLink &&
                                    f.IsRegularFile &&
                                    f.Name.Contains(filenameFilter)).ToList();
-                   sftp.Disconnect();
+                   
+                    sftp.Disconnect();
                 }
                 catch (Exception e)
                 {
@@ -138,7 +139,7 @@ namespace zInvoiceTransformer.Comms
                             sftpClient.DownloadFile(
                                 Path.Combine(remoteFolder, file.Name).Replace('\\', '/'),
                                 fs,
-                                downloaded => progressAction((long)downloaded / filesToDownload.Count));
+                                downloaded => progressAction((long)downloaded));
                         }
                     }
                     sftpClient.Disconnect();
