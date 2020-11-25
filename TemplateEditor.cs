@@ -13,8 +13,8 @@ namespace zInvoiceTransformer
         static XDocument _invoiceImportTemplates;
         XElement _selectedTemplateForDisplay;
         XElement _originalTemplate;
-        InvoiceTemplateModel _invoiceTemplateModel;
-        bool _isInitialLoad = true;
+        readonly InvoiceTemplateModel _invoiceTemplateModel;
+        bool _isInitialLoad;
         string _fieldTemplate =
 @"<Field FieldNameId="""" > 
     <Delimited Position="""" />
@@ -39,7 +39,7 @@ namespace zInvoiceTransformer
             _templatesListBox.Items.AddRange(allTemplateListItems);
 
             if (string.IsNullOrEmpty(selectedTemplateId) && _invoiceTemplateModel.SelectedTemplate != null)
-                SelectedTemplateId = _invoiceTemplateModel.SelectedTemplate.Attribute("Id").Value;
+                SelectedTemplateId = _invoiceTemplateModel.SelectedTemplate.Id.ToString();
             else
                 SelectedTemplateId = selectedTemplateId;
         }
@@ -52,7 +52,7 @@ namespace zInvoiceTransformer
             if (!_isInitialLoad && SelectedTemplateHasEdits())
             {
                 var result = MessageBox.Show(this,
-                                string.Format("The selected template '{0}' has changed.\nSave changes?", _selectedTemplateForDisplay.Attribute("Name").Value),
+                    $"The selected template '{_selectedTemplateForDisplay.Attribute("Name").Value}' has changed.\nSave changes?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);

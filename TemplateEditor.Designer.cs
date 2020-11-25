@@ -871,6 +871,7 @@
             this.button1.TabIndex = 9;
             this.button1.Text = "...";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Visible = false;
             this.button1.Click += new System.EventHandler(this._selectKeyfileLocationButton_Click);
             // 
             // _keyfileLocationTextbox
@@ -880,6 +881,7 @@
             this._keyfileLocationTextbox.Name = "_keyfileLocationTextbox";
             this._keyfileLocationTextbox.Size = new System.Drawing.Size(280, 26);
             this._keyfileLocationTextbox.TabIndex = 8;
+            this._keyfileLocationTextbox.Visible = false;
             // 
             // _portTextbox
             // 
@@ -923,6 +925,7 @@
             this._keyfileLocationLabel.Size = new System.Drawing.Size(124, 20);
             this._keyfileLocationLabel.TabIndex = 6;
             this._keyfileLocationLabel.Text = "Keyfile Location:";
+            this._keyfileLocationLabel.Visible = false;
             // 
             // _passwordLabel
             // 
@@ -960,7 +963,7 @@
             this._urlLabel.Location = new System.Drawing.Point(36, 132);
             this._urlLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this._urlLabel.Name = "_urlLabel";
-            this._urlLabel.Size = new System.Drawing.Size(33, 20);
+            this._urlLabel.Size = new System.Drawing.Size(67, 20);
             this._urlLabel.TabIndex = 2;
             this._urlLabel.Text = "HostUrl:";
             // 

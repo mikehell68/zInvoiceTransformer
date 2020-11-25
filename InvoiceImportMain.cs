@@ -5,8 +5,11 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using LogThis;
 using System.IO;
+using System.Xml.Serialization;
 using zInvoiceTransformer.Comms;
-using zInvoiceTransformer.Properties;
+using ZinvoiceTransformer.Properties;
+using ZinvoiceTransformer.XmlHelpers;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
@@ -17,11 +20,33 @@ namespace zInvoiceTransformer
         private static InvoiceTemplateModel _invoiceTemplateModel;
         IClientTransferProtocol _clientTransferProtocol;
 
+        private InvoiceImportTemplates _importTemplates;
+
         public InvoiceImportMain()
         {
             InitializeComponent();
             InitialiseEvents();
             _invoiceTemplateModel = new InvoiceTemplateModel();
+
+            //string xml = File.ReadAllText( InvoiceTemplateModel.InvoiceImportTemplatePath);
+            //_importTemplates = xml.ParseXml<InvoiceImportTemplates>();
+            //_importTemplates.Templates.FirstOrDefault(t => t.Id == 2).RemoteInvoiceSettings =
+            //    new InvoiceImportTemplatesTemplateRemoteInvoiceSettings
+            //    {
+            //        InvoiceFileCustomerPrefix = "", 
+            //        keyfileLocation = "", 
+            //        password = "xyz", 
+            //        port = 22,
+            //        RemoteFolder = "/inv", 
+            //        RemoteTransferProtocolTypeId = 2, 
+            //        url = "", 
+            //        username = "mike"
+            //    };
+            
+            //XmlSerializer s = new XmlSerializer(typeof(InvoiceImportTemplates));
+            //FileStream file = File.Create(InvoiceTemplateModel.InvoiceImportTemplatePath +"." +DateTime.Now.TimeOfDay.Ticks);
+            //s.Serialize(file, _importTemplates);
+            //file.Close();
         }
 
         void InitialiseEvents()
@@ -57,22 +82,23 @@ namespace zInvoiceTransformer
 
         private static TemplateListItem[] GetListItemsForActiveTemplates()
         {
-            return
-                _invoiceTemplateModel.GetAllActiveTemplates().Select(
-                    template => new TemplateListItem
-                        {
-                            Id = template.Attribute("Id").Value,
-                            Name = template.Attribute("Name").Value,
-                            IsInUse = template.Attribute("Active").Value == "1"
-                        }).ToArray();
+            return _invoiceTemplateModel.GetAllTemplatesArray();
+            //return
+            //    _invoiceTemplateModel.GetAllActiveTemplates().Select(
+            //        template => new TemplateListItem
+            //            {
+            //                Id = template.Attribute("Id").Value,
+            //                Name = template.Attribute("Name").Value,
+            //                IsInUse = template.Attribute("Active").Value == "1"
+            //            }).ToArray();
         }
                 
         void OnSelectedTemplateChanged(object sender, EventArgs e)
         {
             if (_templateSelectorListBox.SelectedItem != null)
             {
-                _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
-
+                //_invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
+                _invoiceTemplateModel.SetSelectedTemplate(Convert.ToByte(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id));
                 _invoiceFilesListBox.Items.Clear();
 
                 var fileList = _invoiceTemplateModel.GetSelectedTemplateImportFiles();
@@ -84,13 +110,13 @@ namespace zInvoiceTransformer
                     if( MessageBox.Show(
                             this, 
                             "Could not find invoice source folder: " + '\n' +
-                            _invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value + 
+                            _invoiceTemplateModel.SelectedTemplate.SourceFolder + 
                             '\n' + "Do you want to create the folder now?",
                             Resources.AppNameText, 
                             MessageBoxButtons.YesNoCancel, 
                             MessageBoxIcon.Warning)  == DialogResult.Yes )
                     {
-                        Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value);
+                        Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.SourceFolder);
                     }
                 }
             }
@@ -298,9 +324,8 @@ namespace zInvoiceTransformer
             
             _clientTransferProtocol = RemoteConnectionFactory.Build(
                 Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
-                                    ?.Element("RemoteInvoiceSettings")
-                                    ?.Attribute("RemoteTransferProtocolTypeId")
-                                    ?.Value ?? "0"));
+                                    ?.RemoteInvoiceSettings
+                                    ?.RemoteTransferProtocolTypeId));
 
             if (_clientTransferProtocol == null)
             {

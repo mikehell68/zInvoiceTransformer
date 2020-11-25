@@ -20,9 +20,7 @@
     </FileFormatTypes>
     <RemoteTransferProtocolTypes>
       <RemoteTransferProtocolType Id="0" Name="None" />
-      <RemoteTransferProtocolType Id="1" Name="FTP" />
-      <RemoteTransferProtocolType Id="2" Name="sFTP" />
-      <RemoteTransferProtocolType Id="3" Name="API" />
+      <RemoteTransferProtocolType Id="1" Name="sFTP" />
     </RemoteTransferProtocolTypes>
   </Definitions>
   <ImportSettings>
@@ -210,7 +208,7 @@
           <Delimited Position="44" />
         </Field>
       </DetailFields>
-      <SummaryRow RecordTypePostion="5" RecordTypeIdentifier="SUM" />
+      <SummaryRow RecordTypePostion="5" RecordTypeIdentifier="SUM"></SummaryRow>
       <Directives>
         <Directive Id="1" Name="UnitsQuantityAsPartialCase">
           <Condition ConditionFieldPosition="8" ConditionValue="1" />
@@ -238,7 +236,7 @@
       <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
     </Template>
     <Template Id="5" Name="US Food (A2A)" Active="1" TemplateVersion="1" Description="US Food Invoice" FileFormatTypeId="1" SourceFolder="c:\temp\usfood" OutputFolder="c:\temp\import" Delimiter="~" LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="1" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
-      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="2" url="ediprod.usfoods.com" port="22" username="ECWDBARB" password="" keyfileLocation="C:\temp" RemoteFolder="./inv" InvoiceFileCustomerPrefix="" />
+      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="1" url="ediprod.usfoods.com" port="22" username="ECWDBARB" password="" keyfileLocation="C:\temp" RemoteFolder="./inv" InvoiceFileCustomerPrefix="" />
       <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
         <Field FieldNameId="1">
           <Delimited Position="20" />
@@ -285,7 +283,8 @@
           <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
         </Fields>
       </TemplateTransform>
-      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+      <InvoiceNumbersToUpdate>
+      </InvoiceNumbersToUpdate>
     </Template>
   </Templates>
 </InvoiceImportTemplates>

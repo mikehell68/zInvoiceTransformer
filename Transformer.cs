@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using LogThis;
+using ZinvoiceTransformer.XmlHelpers;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
@@ -45,14 +47,15 @@ namespace zInvoiceTransformer
     static class Transformer
     {
         static XDocument _invoiceImportTemplates;
-        public static XDocument InvoiceImportTemplates
+        static InvoiceImportTemplates _importTemplates;
+        public static InvoiceImportTemplates InvoiceImportTemplates
         {
-            get { return _invoiceImportTemplates; }
-            set { _invoiceImportTemplates = value; }
+            get => _importTemplates;
+            set => _importTemplates = value;
         }
 
-        static XElement _templateTransformFields;
-        static XElement _selectedTemplate;
+        static InvoiceImportTemplatesTemplateTemplateTransform _templateTransformFields;
+        static InvoiceImportTemplatesTemplate _selectedTemplate;
 
         static string _invoiceNumber = "";
         static string _invoiceDate = "";
@@ -75,12 +78,12 @@ namespace zInvoiceTransformer
 
         public static TransformResultInfo DoTransform(List<int> templateIds)
         {
-            var templatesToTransform = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Where(t => templateIds.Contains(int.Parse(t.Attribute("Id").Value))).ToList();
+            var templatesToTransform = _importTemplates.Templates.Where(t => templateIds.Contains(t.Id)).ToList();
 
             return DoTransform(templatesToTransform);
         }
 
-        public static TransformResultInfo DoTransform(List<XElement> templates)
+        public static TransformResultInfo DoTransform(List<InvoiceImportTemplatesTemplate> templates)
         {
             var transformResultInfo = new TransformResultInfo();
             
@@ -93,98 +96,97 @@ namespace zInvoiceTransformer
             return transformResultInfo;
         }
 
-        private static TransformResultInfo DoTransform(XElement template)
+        private static TransformResultInfo DoTransform(InvoiceImportTemplatesTemplate template)
         {
             Log.LogThis("Starting invoice transform", eloglevel.info);
-            Log.LogThis(string.Format("Using invoice template: Id: {0} Name: {1}", template.Attribute("Id").Value, template.Attribute("Name").Value), eloglevel.info);
-            Log.LogThis(string.Format("Loading original invoice file(s) from: {0}", template.Attribute("SourceFolder").Value), eloglevel.info);
-            
-            List<string> filelist = Directory.GetFiles(template.Attribute("SourceFolder").Value).OfType<string>().ToList();
-            Log.LogThis(string.Format("Invocie files found: {0}", string.Join(",", filelist.Select(Path.GetFileName).ToArray())), eloglevel.info);
+            Log.LogThis($"Using invoice template: Id: {template.Id} Name: {template.Name}", eloglevel.info);
+            Log.LogThis($"Loading original invoice file(s) from: {template.SourceFolder}", eloglevel.info);
 
-            _templateTransformFields = template.Descendants("TemplateTransform").FirstOrDefault();
+            var filelist = Directory.GetFiles(template.SourceFolder).ToList();
+            Log.LogThis($"Invocie files found: {string.Join(",", filelist.Select(Path.GetFileName).ToArray())}", eloglevel.info);
+
+            _templateTransformFields = template.TemplateTransform;
             _selectedTemplate = template;
-            _selectedTemplate.Element("InvoiceNumbersToUpdate").RemoveAll();
+            _selectedTemplate.InvoiceNumbersToUpdate = new List<string>().ToArray();
 
-            var eachesConversionElement = _selectedTemplate.Element("EachesConversion");
+            var eachesConversionElement = _selectedTemplate.EachesConversion;
 
-            _useEachesConversion = (eachesConversionElement != null && eachesConversionElement.Attribute("enabled") != null && eachesConversionElement.Attribute("enabled").Value == "1");
-            _eachesConverionTag = _useEachesConversion && eachesConversionElement.Attribute("tag") != null ? eachesConversionElement.Attribute("tag").Value : "";
-            
+            _useEachesConversion = eachesConversionElement != null && eachesConversionElement.enabled == 1;
+            _eachesConverionTag = _useEachesConversion && eachesConversionElement?.tag != null ? eachesConversionElement.tag : "";
+
             var transformResultInfo = new TransformResultInfo();
             var newSplitLine = new ArrayList();
-            
+
             var fileInvoices = new Dictionary<string, List<string[]>>();
-            
+
             foreach (string file in filelist)
             {
-                Log.LogThis(string.Format("Processing file: {0}", file), eloglevel.info);
+                Log.LogThis($"Processing file: {file}", eloglevel.info);
                 fileInvoices.Add(file, new List<string[]>());
 
                 transformResultInfo.NumberOfFilesProcessed += 1;
 
                 int newFieldPos = 0;
-                XElement invoiceNoTemplateField = null;
-                XElement invoiceDateTemplateField = null;
+                InvoiceImportTemplatesTemplateMasterRowField invoiceNoTemplateField = null;
+                InvoiceImportTemplatesTemplateMasterRowField invoiceDateTemplateField = null;
 
                 var sr = new StreamReader(file);
 
-                if (_selectedTemplate.Attribute("HasHeaderRecord").Value == "1")
+                if (_selectedTemplate.HasHeaderRecord == 1)
                 {
                     sr.ReadLine(); //advance past the header line
                 }
 
                 while (!sr.EndOfStream)
                 {
-                    var csvParser = new CsvParser(_selectedTemplate.Attribute("Delimiter").Value[0], '\0');
+                    var csvParser = new CsvParser(_selectedTemplate.Delimiter[0], '\0');
 
                     var splitOriginalLine = (string[])csvParser.CSVParser(sr.ReadLine()).ToArray(typeof(string));
-                    
+
                     if (splitOriginalLine.Count() == 0)
                         continue;
 
                     newSplitLine.Clear();
 
-                    if (_selectedTemplate.Attribute("HasMasterRecord").Value == "1" && IsMasterRow(splitOriginalLine))
+                    if (_selectedTemplate.HasMasterRecord == 1 && IsMasterRow(splitOriginalLine))
                     {
-                        invoiceNoTemplateField = _selectedTemplate.Descendants("MasterRow").Descendants("Field").FirstOrDefault(x => x.Attribute("FieldNameId").Value == "1");
-                        _invoiceNumber = splitOriginalLine[int.Parse(invoiceNoTemplateField.Descendants("Delimited").First().Attribute("Position").Value)];
+                        invoiceNoTemplateField = _selectedTemplate.MasterRow.Field.FirstOrDefault(x => x.FieldNameId == 1);
+                        _invoiceNumber = splitOriginalLine[invoiceNoTemplateField.Delimited.Position];
 
-                        invoiceDateTemplateField = _selectedTemplate.Descendants("MasterRow").Descendants("Field").FirstOrDefault(x => x.Attribute("FieldNameId").Value == "2");
-                        _invoiceDate = splitOriginalLine[int.Parse(invoiceDateTemplateField.Descendants("Delimited").First().Attribute("Position").Value)];
+                        invoiceDateTemplateField = _selectedTemplate.MasterRow.Field.FirstOrDefault(x => x.FieldNameId == 2);
+                        _invoiceDate = splitOriginalLine[invoiceDateTemplateField.Delimited.Position];
                     }
                     else if (IsDetailRow(splitOriginalLine))
                     {
-                        if (_selectedTemplate.Attribute("HasMasterRecord").Value == "1")
+                        if (_selectedTemplate.HasMasterRecord == 1)
                         {
                             newSplitLine.Add(_invoiceNumber);
-                            SetNewFieldPosition(invoiceNoTemplateField, ref newFieldPos);
+                            SetNewFieldPosition(invoiceNoTemplateField.FieldNameId, ref newFieldPos);
 
                             newSplitLine.Add(_invoiceDate);
-                            SetNewFieldPosition(invoiceDateTemplateField, ref newFieldPos);
+                            SetNewFieldPosition(invoiceDateTemplateField.FieldNameId, ref newFieldPos);
                         }
 
-                        foreach (XElement templateField in _selectedTemplate.Element("DetailFields").Descendants("Field"))
+                        foreach (InvoiceImportTemplatesTemplateDetailFieldsField templateField in _selectedTemplate.DetailFields.Field)
                         {
-                            string fieldValue = splitOriginalLine[int.Parse(templateField.Descendants("Delimited").First().Attribute("Position").Value)];
+                            string fieldValue = splitOriginalLine[templateField.Delimited.Position];
 
-                            if (templateField.Attribute("DirectiveId") != null &&
-                                !string.IsNullOrEmpty(templateField.Attribute("DirectiveId").Value))
+                            if (templateField.DirectiveId > 0)
                             {
-                                Log.LogThis("Alternative processing directive found for fieldNameId " + templateField.Attribute("FieldNameId").Value + ", directiveId " + templateField.Attribute("DirectiveId").Value, eloglevel.info);
-                                
-                                var fieldDirective = _selectedTemplate.Element("Directives").Descendants("Directive").FirstOrDefault(directive => directive.Attribute("Id").Value == templateField.Attribute("DirectiveId").Value);
-                                var sourceFieldConditionValue = splitOriginalLine[int.Parse(fieldDirective.Element("Condition").Attribute("ConditionFieldPosition").Value)];
-                                
-                                Log.LogThis("DirectiveId " + fieldDirective.Attribute("Id").Value + ": Name: " + fieldDirective.Attribute("Name").Value, eloglevel.info);
+                                Log.LogThis("Alternative processing directive found for fieldNameId " + templateField.FieldNameId + ", directiveId " + templateField.DirectiveId, eloglevel.info);
+
+                                var fieldDirective = _selectedTemplate.Directives.Directive.Id == templateField.DirectiveId ? _selectedTemplate.Directives.Directive : null;
+                                var sourceFieldConditionValue = splitOriginalLine[fieldDirective.Condition.ConditionFieldPosition];
+
+                                Log.LogThis("DirectiveId " + fieldDirective.Id + ": Name: " + fieldDirective.Name, eloglevel.info);
 
                                 decimal result = decimal.Parse(fieldValue);
 
-                                if (sourceFieldConditionValue == fieldDirective.Element("Condition").Attribute("ConditionValue").Value)
+                                if (sourceFieldConditionValue == fieldDirective.Condition.ConditionValue.ToString())
                                 {
-                                    var operand1 = decimal.Parse(splitOriginalLine[int.Parse(fieldDirective.Element("Calculation").Element("Operand1").Attribute("sourceFieldPosition").Value)]);
-                                    var operand2 = decimal.Parse(splitOriginalLine[int.Parse(fieldDirective.Element("Calculation").Element("Operand2").Attribute("sourceFieldPosition").Value)]);
-                                    var op = fieldDirective.Element("Calculation").Element("Operator").Attribute("OpType").Value;
+                                    var operand1 = decimal.Parse(splitOriginalLine[fieldDirective.Calculation.Operand1.sourceFieldPosition]);
+                                    var operand2 = decimal.Parse(splitOriginalLine[fieldDirective.Calculation.Operand2.sourceFieldPosition]);
+                                    var op = fieldDirective.Calculation.Operator.OpType;
 
                                     switch (op)
                                     {
@@ -210,28 +212,34 @@ namespace zInvoiceTransformer
                             }
 
                             newSplitLine.Add(fieldValue);
-                            SetNewFieldPosition(templateField, ref newFieldPos);
+                            SetNewFieldPosition(templateField.FieldNameId, ref newFieldPos);
                         }
 
                         //if (!IgnoreNegativeAmountLines(new[] { "UnitCost", "TotalCost" }, newSplitLine))
-                            fileInvoices[file].Add(newSplitLine.OfType<string>().ToArray()); //build a list of all the detail lines
+                        fileInvoices[file].Add(newSplitLine.OfType<string>().ToArray()); //build a list of all the detail lines
                     }
                     else if (IsSummaryRow(splitOriginalLine))
-                    { 
+                    {
                         //ignore summary lines
                     }
                 }
                 sr.Close();
-                                
+
                 transformResultInfo.NumberOfInvoiceLinesProcessed += fileInvoices[file].Count;
                 ArchiveProcessedInvoiceFile(file);
             }
-            
+
             var allDetailLines = fileInvoices.Values.SelectMany(l => l).ToList();
             if (allDetailLines.Count > 0)
             {
+                List<string> invoiceNumbersToUpdate = new List<string>();
                 foreach (var inv in allDetailLines.Select(invLine => invLine[0]).Distinct().ToList())
-                    _selectedTemplate.Element("InvoiceNumbersToUpdate").Add(new XElement("InvoiceNumber", inv));
+                {
+                    invoiceNumbersToUpdate.Add(inv);
+                    //_selectedTemplate.InvoiceNumbersToUpdate.Add(new XElement("InvoiceNumber", inv));
+                }
+
+                _selectedTemplate.InvoiceNumbersToUpdate = invoiceNumbersToUpdate.ToArray();
 
                 CreateFixedLengthFieldsAndTransformDetials(fileInvoices);
 
@@ -243,13 +251,13 @@ namespace zInvoiceTransformer
 
         private static bool IsSummaryRow(string[] splitLine)
         {
-            if (_selectedTemplate.Element("SummaryRow").Descendants("Field").Count() > 0)
+            if (_selectedTemplate.SummaryRow != null)
             {
-                if (_selectedTemplate.Element("SummaryRow").Attributes().Count() == 0)
+                if (_selectedTemplate.SummaryRow.Field.Count() == 0)
                     return false;
 
-                int recordTypePostion = int.Parse(_selectedTemplate.Element("SummaryRow").Attribute("RecordTypePostion").Value);
-                var recordTypeIdentifier = _selectedTemplate.Element("SummaryRow").Attribute("RecordTypeIdentifier").Value;
+                int recordTypePostion = _selectedTemplate.SummaryRow.RecordTypePostion;
+                var recordTypeIdentifier = _selectedTemplate.SummaryRow.RecordTypeIdentifier;
 
                 return splitLine[recordTypePostion] == recordTypeIdentifier;
             }
@@ -265,12 +273,12 @@ namespace zInvoiceTransformer
 
                 string originalOutputFilePath;
 
-                if (_selectedTemplate.Attribute("OutputFolder") != null && !string.IsNullOrEmpty(_selectedTemplate.Attribute("OutputFolder").Value))
-                    originalOutputFilePath = Path.Combine(_selectedTemplate.Attribute("OutputFolder").Value, filename);
+                if (_selectedTemplate.OutputFolder != null && !string.IsNullOrEmpty(_selectedTemplate.OutputFolder))
+                    originalOutputFilePath = Path.Combine(_selectedTemplate.OutputFolder, filename);
                 else
-                    originalOutputFilePath = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("InvoiceFileLocation").Value;
+                    originalOutputFilePath = _importTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation;
 
-                Log.LogThis(string.Format("Saving transformed invoice file: {0}", originalOutputFilePath), eloglevel.info);
+                Log.LogThis($"Saving transformed invoice file: {originalOutputFilePath}", eloglevel.info);
 
                 int duplicateFileNameTag = 0;
                 var outputFile = originalOutputFilePath;
@@ -290,7 +298,7 @@ namespace zInvoiceTransformer
 
             var archiveFilePath = Path.Combine(Path.GetDirectoryName(file), "transformed");
 
-            Log.LogThis(string.Format("Archiving transformed invoice file: {0} to {1}", Path.GetFileName(file), archiveFilePath), eloglevel.info);
+            Log.LogThis($"Archiving transformed invoice file: {Path.GetFileName(file)} to {archiveFilePath}", eloglevel.info);
             
             Directory.CreateDirectory(archiveFilePath);
 
@@ -305,11 +313,11 @@ namespace zInvoiceTransformer
             File.Move(file, outputFileTmp);
         }
 
-        public static List<XElement> GetTemplatesInUse()
+        public static List<InvoiceImportTemplatesTemplate> GetTemplatesInUse()
         {
             LoadTemplates();
-            var templateIdsToUse = _invoiceImportTemplates.Root.Element("ImportSettings").Descendants("ImportOrder").Descendants("Template").Attributes("Id").Select(x => x.Value).ToList();
-            var templatesToUse = _invoiceImportTemplates.Root.Descendants("Templates").Descendants("Template").Where(x => templateIdsToUse.Contains(x.Attribute("Id").Value)).ToList();
+            var templateIdsToUse = _importTemplates.ImportSettings.ImportOrder.Select(x => x.Id).ToList();
+            var templatesToUse = _importTemplates.Templates.Where(x => templateIdsToUse.Contains(x.Id)).ToList();
             return templatesToUse;
         }
 
@@ -323,25 +331,26 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("Error reading invoice templates file: {0}", ex), eloglevel.error);
+                Log.LogThis($"Error reading invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
 
-            var templatesStringReader = new StringReader(templatesXml);
+            //var templatesStringReader = new StringReader(templatesXml);
             try
             {
-                _invoiceImportTemplates = XDocument.Load(templatesStringReader);
+                _importTemplates = templatesXml.ParseXml<InvoiceImportTemplates>();
+                //_invoiceImportTemplates = XDocument.Load(templatesStringReader);
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("Error loading xml from invoice templates file: {0}", ex), eloglevel.error);
+                Log.LogThis($"Error loading xml from invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
             finally
             {
-                templatesStringReader.Close();
+                //templatesStringReader.Close();
             }
-            Log.LogThis(string.Format("{0} invoice templates loaded ", _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()), eloglevel.info);
+            Log.LogThis($"{_importTemplates.Templates.Count()} invoice templates loaded ", eloglevel.info);
         }
 
         static void SaveTemplates()
@@ -372,9 +381,9 @@ namespace zInvoiceTransformer
             return fixedWidthInvoiceStrings.ToString();
         }
 
-        private static void SetNewFieldPosition(XElement invoiceFieldDefinition, ref int _newFieldPos)
+        private static void SetNewFieldPosition(byte invoiceFieldId, ref int _newFieldPos)
         {
-            int fieldNameId = int.Parse(invoiceFieldDefinition.Attribute("FieldNameId").Value);
+            int fieldNameId = invoiceFieldId;
             if (!_newFieldPositions.ContainsKey(fieldNameId))
             {
                 _newFieldPositions.Add(fieldNameId, _newFieldPos);
@@ -390,9 +399,10 @@ namespace zInvoiceTransformer
             {
                 KeyValuePair<int, int> fieldPosition = newFieldPosition; //this is the position of a field in the newly created invoice line
 
-                var fieldDataType = _templateTransformFields.Descendants("Fields").Descendants("Field").
-                                        Where(field => field.Attribute("FieldNameId").Value == fieldPosition.Key.ToString()).
-                                        FirstOrDefault().Attribute("DataType").Value;
+                var fieldDataType = _templateTransformFields.Fields.
+                                        Where(field => (int)field.FieldNameId == fieldPosition.Key).
+                                        FirstOrDefault().DataType;
+
                 var allInvoiceLines = fileInvoiceDetailLines.Values.SelectMany(l => l).ToList();
                 int maxFieldlength = allInvoiceLines.Max(x => x[fieldPosition.Value].Length); //get the max length of the field from all fields at a position
                 
@@ -421,9 +431,9 @@ namespace zInvoiceTransformer
                             break;
 
                         case "date":
-                            var dateFormat = _templateTransformFields.Descendants("Fields").Descendants("Field").
-                                                    Where(field => field.Attribute("FieldNameId").Value == fieldPosition.Key.ToString()).
-                                                    FirstOrDefault().Attribute("DateFormat").Value;
+                            var dateFormat = _templateTransformFields.Fields.
+                                                    Where(field => (int)field.FieldNameId == fieldPosition.Key).
+                                                    FirstOrDefault().DateFormat;
 
                             invoiceDetailLine.Value.ForEach(invLine => invLine[fieldPosition.Value] = DateTime.ParseExact(invLine[fieldPosition.Value], dateFormat, CultureInfo.InvariantCulture).ToString("MMddyy"));
                             maxFieldlength = 6;
@@ -470,18 +480,18 @@ namespace zInvoiceTransformer
 
         private static void SetInvoiceFieldTransformData(ref int runningStartPos, int fieldNameId, int maxFieldlength)
         {
-            XElement y = _templateTransformFields.Descendants("Fields").Descendants("Field").Where(x => x.Attribute("FieldNameId").Value == fieldNameId.ToString()).FirstOrDefault();
-            y.SetAttributeValue("Start", runningStartPos);
-            y.SetAttributeValue("Length", maxFieldlength);
+            var y = _templateTransformFields.Fields.Where(x => (int)x.FieldNameId == fieldNameId).FirstOrDefault();
+            y.Start = (byte)runningStartPos;
+            y.Length = (byte)maxFieldlength;
             runningStartPos += maxFieldlength;
         }
 
         private static bool IsDetailRow(string[] splitLine)
         {
-            if (_selectedTemplate.Element("DetailFields").Descendants("Field").Count() > 0)
+            if (_selectedTemplate.DetailFields.Field.Count() > 0)
             {
-                int recordTypePostion = int.Parse(_selectedTemplate.Element("DetailFields").Attribute("RecordTypePostion").Value);
-                var recordTypeIdentifier = _selectedTemplate.Element("DetailFields").Attribute("RecordTypeIdentifier").Value;
+                int recordTypePostion = _selectedTemplate.DetailFields.RecordTypePostion;
+                var recordTypeIdentifier = _selectedTemplate.DetailFields.RecordTypeIdentifier;
 
                 if (recordTypePostion == -1)
                     return true;
@@ -493,13 +503,13 @@ namespace zInvoiceTransformer
 
         private static bool IsMasterRow(string[] splitLine)
         {
-            if (_selectedTemplate.Element("MasterRow").Descendants("Field").Count() > 0)
+            if (_selectedTemplate.MasterRow.Field.Count() > 0)
             {
-                if (_selectedTemplate.Element("MasterRow").Attributes().Count() == 0)
+                if (_selectedTemplate.MasterRow == null)
                     return false;
 
-                int recordTypePostion = int.Parse(_selectedTemplate.Element("MasterRow").Attribute("RecordTypePostion").Value);
-                var recordTypeIdentifier = _selectedTemplate.Element("MasterRow").Attribute("RecordTypeIdentifier").Value;
+                int recordTypePostion = _selectedTemplate.MasterRow.RecordTypePostion;
+                var recordTypeIdentifier = _selectedTemplate.MasterRow.RecordTypeIdentifier;
 
                 return splitLine[recordTypePostion] == recordTypeIdentifier;
             }

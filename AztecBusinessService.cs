@@ -6,6 +6,7 @@ using System.Text;
 using System.Xml.Linq;
 using System.Linq;
 using LogThis;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
@@ -70,7 +71,7 @@ namespace zInvoiceTransformer
             Log.LogThis(string.Format("{0} scripts loaded ", _sqlScripts.Root.Descendants("SqlScript").Count()), eloglevel.info);
         }
         
-        internal static void UpdateInvoiceImportFieldDefinitions(XElement invoiceTemplate)
+        internal static void UpdateInvoiceImportFieldDefinitions(InvoiceImportTemplatesTemplate invoiceTemplate)
         {
             using (var sqlConnection = new SqlConnection(String.Format(dbConnectionString, _databaseName, _databaseMachine)))
             {
@@ -80,9 +81,9 @@ namespace zInvoiceTransformer
                 var sqlScript = _sqlScripts.Descendants("SqlScript").Where(
                         s => s.Attribute("Name").Value == "UpdateFieldDefinitions").FirstOrDefault().Value;
 
-                foreach (var field in invoiceTemplate.Element("TemplateTransform").Element("Fields").Descendants("Field"))
+                foreach (var field in invoiceTemplate.TemplateTransform.Fields)
                 {
-                    sqlStrings.AppendFormat(sqlScript, field.Attribute("Start").Value, field.Attribute("Length").Value, field.Attribute("FieldNameId").Value);
+                    sqlStrings.AppendFormat(sqlScript, field.Start, field.Length, field.FieldNameId);
                     sqlStrings.AppendLine();
                 }
 
@@ -92,13 +93,13 @@ namespace zInvoiceTransformer
                 sqlScript = _sqlScripts.Descendants("SqlScript").Where(
                         s => s.Attribute("Name").Value == "UpdateLbProcessingFieldDefinition").FirstOrDefault().Value;
                 
-                cmd.CommandText = string.Format(sqlScript, invoiceTemplate.Attribute("LbProcessingType").Value);
+                cmd.CommandText = string.Format(sqlScript, invoiceTemplate.LbProcessingType);
                 cmd.ExecuteNonQuery();
 
                 sqlScript = _sqlScripts.Descendants("SqlScript").Where(
                         s => s.Attribute("Name").Value == "UpdateSupplierNameFieldDefinition").FirstOrDefault().Value;
 
-                cmd.CommandText = string.Format(sqlScript, invoiceTemplate.Attribute("Name").Value);
+                cmd.CommandText = string.Format(sqlScript, invoiceTemplate.Name);
                 cmd.ExecuteNonQuery();
 
                 sqlConnection.Close();

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Xml.Linq;
 using LogThis;
 using System.ComponentModel;
+using ZinvoiceTransformer.XmlHelpers;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
@@ -12,6 +14,9 @@ namespace zInvoiceTransformer
     {
         public const string InvoiceImportTemplatePath = @"InvoiceImportTemplates.xml";
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public InvoiceImportTemplates ImportTemplates { get; private set; }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -35,8 +40,8 @@ namespace zInvoiceTransformer
             set => _invoiceImportTemplates = value;
         }
 
-        XElement _selectedTemplate;
-        public XElement SelectedTemplate
+        InvoiceImportTemplatesTemplate _selectedTemplate;
+        public InvoiceImportTemplatesTemplate SelectedTemplate
         {
             get => _selectedTemplate;
             set => _selectedTemplate = value;
@@ -73,13 +78,16 @@ namespace zInvoiceTransformer
         public InvoiceTemplateModel()
         {
             LoadTemplates();
-            _importAppLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("FileName").Value;
-            _importAppInvoiceFileLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("InvoiceFileLocation").Value;
+            _importAppLocation = ImportTemplates.ImportSettings.ImportAppliction.FileName;
+            //_importAppLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("FileName").Value;
+            _importAppInvoiceFileLocation = ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation;
+            //_importAppInvoiceFileLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("InvoiceFileLocation").Value;
         }
         
         public void LoadTemplates()
         {
             Log.LogThis("Loading invoice templates", eloglevel.info);
+            
             string templatesXml;
             try
             {
@@ -91,61 +99,72 @@ namespace zInvoiceTransformer
                 throw;
             }
 
-            var templatesStringReader = new StringReader(templatesXml);
+            //var templatesStringReader = new StringReader(templatesXml);
             try
             {
-                _invoiceImportTemplates = XDocument.Load(templatesStringReader);
+                ImportTemplates = templatesXml.ParseXml<InvoiceImportTemplates>();
+                //_invoiceImportTemplates = XDocument.Load(templatesStringReader);
             }
             catch (Exception ex)
             {
                 Log.LogThis($"Error loading xml from invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
-            finally
-            {
-                templatesStringReader.Close();
-            }
-            Log.LogThis(
-                $"{_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()} invoice templates loaded ", eloglevel.info);
+            //finally
+            //{
+            //    templatesStringReader.Close();
+            //}
+            Log.LogThis($"{ImportTemplates.Templates.Count()} invoice templates loaded ", eloglevel.info);
+            
+            //Log.LogThis(
+            //    $"{_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()} invoice templates loaded ", eloglevel.info);
         }
 
         public TemplateListItem[] GetAllTemplatesArray()
         {
-            if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
-            {
-                return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Select(
-                    template => new TemplateListItem
-                                    {
-                                        Id = template.Attribute("Id").Value,
-                                        Name = template.Attribute("Name").Value,
-                                        IsInUse = template.Attribute("Active").Value == "1"
-                                    }).ToArray();
-            }
+            return ImportTemplates.Templates.Select(
+                template => new TemplateListItem
+                {
+                    Id = template.Id.ToString(),
+                    Name = template.Name,
+                    IsInUse = template.Active == 1
+                }).ToArray();
 
-            return new TemplateListItem[0];
+            //if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
+            //{
+            //    return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Select(
+            //        template => new TemplateListItem
+            //                        {
+            //                            Id = template.Attribute("Id").Value,
+            //                            Name = template.Attribute("Name").Value,
+            //                            IsInUse = template.Attribute("Active").Value == "1"
+            //                        }).ToArray();
+            //}
+
+            //return new TemplateListItem[0];
         }
 
-        public IEnumerable<XElement> GetAllTemplates()
-        {
-            if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
-            {
-                return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template");
-            }
+        //public IEnumerable<XElement> GetAllTemplates()
+        //{
+        //    if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
+        //    {
+        //        return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template");
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
-        public IEnumerable<XElement> GetAllActiveTemplates()
-        {
-            var allActiveTemplates = GetAllTemplates();
+        //public IEnumerable<XElement> GetAllActiveTemplates()
+        //{
+        //    var allActiveTemplates = GetAllTemplates();
             
-            if (allActiveTemplates != null)
-            {
-                return GetAllTemplates().Where(t => t.Attribute("Active").Value == "1");
-            }
+        //    if (allActiveTemplates != null)
+        //    {
+        //        return GetAllTemplates().Where(t => t.Attribute("Active").Value == "1");
+        //    }
 
-            return new List<XElement>();
-        }
+        //    return new List<XElement>();
+        //}
 
         public XElement GetTemplate(string templateId)
         {
@@ -163,12 +182,20 @@ namespace zInvoiceTransformer
             return template;
         }
 
+        public void SetSelectedTemplate(byte selectedTemplateId)
+        {
+            var selectedTemplate = ImportTemplates.Templates.FirstOrDefault(t => t.Id == selectedTemplateId);
+            SelectedTemplateName = selectedTemplate == null ? "" : selectedTemplate.Name;
+            SelectedTemplateDescription = selectedTemplate == null ? "" : selectedTemplate.Description;
+            IsDirty = false;
+        }
+
         public string[] GetSelectedTemplateImportFiles()
         {
             if (SelectedTemplate == null)
                 return new string[]{ "<-no supplier selected->" };
 
-            string sourceFolder = SelectedTemplate.Attribute("SourceFolder").Value;
+            string sourceFolder = SelectedTemplate.SourceFolder;
             var files = new List<string>
             {
                 sourceFolder
@@ -197,13 +224,13 @@ namespace zInvoiceTransformer
                 if (SelectedTemplate != null)
                     return new RemoteInvoiceConnectionInfo
                     {
-                        DestinationFolder = SelectedTemplate.Attribute("SourceFolder").Value,
-                        InvoiceFilePrefix = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("InvoiceFileCustomerPrefix").Value,
-                        HostUrl = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("url").Value,
-                        Port = Convert.ToInt32(SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("port").Value),
-                        Username = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("username").Value,
-                        Password = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("password").Value,
-                        RemoteFolder = SelectedTemplate.Element("RemoteInvoiceSettings").Attribute("RemoteFolder").Value
+                        DestinationFolder = SelectedTemplate.SourceFolder,
+                        InvoiceFilePrefix = SelectedTemplate.RemoteInvoiceSettings.InvoiceFileCustomerPrefix,
+                        HostUrl = SelectedTemplate.RemoteInvoiceSettings.url,
+                        Port = SelectedTemplate.RemoteInvoiceSettings.port,
+                        Username = SelectedTemplate.RemoteInvoiceSettings.username,
+                        Password = SelectedTemplate.RemoteInvoiceSettings.password,
+                        RemoteFolder = SelectedTemplate.RemoteInvoiceSettings.RemoteFolder
                     };
 
                 Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);
@@ -234,7 +261,7 @@ namespace zInvoiceTransformer
             AztecBusinessService.CreateUsfFieldDefIfRequired();
 
             if (_selectedTemplate != null)
-                return Transformer.DoTransform(new List<XElement> {_selectedTemplate});
+                return Transformer.DoTransform(new List<InvoiceImportTemplatesTemplate> {_selectedTemplate});
 
             return new TransformResultInfo
                        {
@@ -246,7 +273,7 @@ namespace zInvoiceTransformer
                        };
         }
 
-        public void UpdateInvoiceImportFieldDefinitions(XElement invoiceTemplate)
+        public void UpdateInvoiceImportFieldDefinitions(InvoiceImportTemplatesTemplate invoiceTemplate)
         {
             AztecBusinessService.UpdateInvoiceImportFieldDefinitions(invoiceTemplate);
         }
@@ -265,10 +292,10 @@ namespace zInvoiceTransformer
         {
             string outputPathToUse;
 
-            if (SelectedTemplate.Attribute("OutputFolder") != null && !string.IsNullOrEmpty(SelectedTemplate.Attribute("OutputFolder").Value))
-                outputPathToUse = SelectedTemplate.Attribute("OutputFolder").Value;
+            if (SelectedTemplate.OutputFolder != null && !string.IsNullOrEmpty(SelectedTemplate.OutputFolder))
+                outputPathToUse = SelectedTemplate.OutputFolder;
             else
-                outputPathToUse = InvoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("InvoiceFileLocation").Value;
+                outputPathToUse = ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation;
 
             AztecBusinessService.UpdatePurSysVarImportFolder(outputPathToUse);
         }
