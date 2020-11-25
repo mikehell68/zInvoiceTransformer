@@ -102,7 +102,7 @@
     </Compile>
     <Compile Include="TemplateListItem.cs" />
     <Compile Include="Transformer.cs" />
-    <Compile Include="XmlHelpers\ParseHelpers.cs" />
+    <Compile Include="XmlHelpers\Helpers.cs" />
     <Compile Include="XmlModels\InvoiceImportTemplates.cs" />
     <Compile Include="XmlModels\InvoiceImportTemplatesDefinitions.cs" />
     <Compile Include="XmlModels\InvoiceImportTemplatesDefinitionsFieldName.cs" />

@@ -33,12 +33,12 @@ namespace zInvoiceTransformer
             return true;
         }
         
-        XDocument _invoiceImportTemplates;
-        public XDocument InvoiceImportTemplates
-        {
-            get => _invoiceImportTemplates;
-            set => _invoiceImportTemplates = value;
-        }
+        //XDocument _invoiceImportTemplates;
+        //public XDocument InvoiceImportTemplates
+        //{
+        //    get => _invoiceImportTemplates;
+        //    set => _invoiceImportTemplates = value;
+        //}
 
         InvoiceImportTemplatesTemplate _selectedTemplate;
         public InvoiceImportTemplatesTemplate SelectedTemplate
@@ -166,18 +166,17 @@ namespace zInvoiceTransformer
         //    return new List<XElement>();
         //}
 
-        public XElement GetTemplate(string templateId)
+        public InvoiceImportTemplatesTemplate GetTemplate(string templateId)
         {
-            XElement template = null;
+            InvoiceImportTemplatesTemplate template = null;
 
-            if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
+            if (ImportTemplates.Templates.Any())
             {
-                template = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Where(
-                    t => t.Attribute("Id").Value == templateId).FirstOrDefault();
+                template = ImportTemplates.Templates.FirstOrDefault(t => t.Id == Convert.ToByte(templateId));
             }
 
-            SelectedTemplateName = template == null ? "" : template.Attribute("Name").Value;
-            SelectedTemplateDescription = template == null ? "" : template.Attribute("Description").Value;
+            SelectedTemplateName = template == null ? "" : template.Name;
+            SelectedTemplateDescription = template == null ? "" : template.Description;
             IsDirty = false;
             return template;
         }
@@ -302,10 +301,12 @@ namespace zInvoiceTransformer
 
         internal void Save()
         {
-            _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").SetAttributeValue("FileName", _importAppLocation);
-            _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").SetAttributeValue("InvoiceFileLocation", _importAppInvoiceFileLocation);
+            ImportTemplates.ImportSettings.ImportAppliction.FileName = _importAppLocation;
+            ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation = _importAppInvoiceFileLocation;
 
-            _invoiceImportTemplates.Save(InvoiceImportTemplatePath);
+            // TODO: serialise and save 
+            ImportTemplates.Save(InvoiceImportTemplatePath);
+            
             IsDirty = false;
         }
 

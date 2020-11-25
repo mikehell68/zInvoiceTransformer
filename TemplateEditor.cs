@@ -4,15 +4,18 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using System;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using zInvoiceTransformer.Comms;
+using ZinvoiceTransformer.XmlHelpers;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
     public partial class TemplateEditor : Form
     {
-        static XDocument _invoiceImportTemplates;
-        XElement _selectedTemplateForDisplay;
-        XElement _originalTemplate;
+        static InvoiceImportTemplates _invoiceImportTemplates;
+        InvoiceImportTemplatesTemplate _selectedTemplateForDisplay;
+        InvoiceImportTemplatesTemplate _originalTemplate;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
         bool _isInitialLoad;
         string _fieldTemplate =
@@ -32,9 +35,9 @@ namespace zInvoiceTransformer
 
         private void LoadTemplates(string selectedTemplateId = null)
         {
-            _invoiceImportTemplates = _invoiceTemplateModel.InvoiceImportTemplates;
+            _invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
 
-            var allTemplateListItems = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Select(x => new TemplateListItem { Id = x.Attribute("Id").Value, Name = x.Attribute("Name").Value, IsInUse = x.Attribute("Active").Value == "1" }).ToArray();
+            var allTemplateListItems = _invoiceImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active == 1 }).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
 
@@ -52,7 +55,7 @@ namespace zInvoiceTransformer
             if (!_isInitialLoad && SelectedTemplateHasEdits())
             {
                 var result = MessageBox.Show(this,
-                    $"The selected template '{_selectedTemplateForDisplay.Attribute("Name").Value}' has changed.\nSave changes?",
+                    $"The selected template '{_selectedTemplateForDisplay.Name}' has changed.\nSave changes?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
@@ -69,7 +72,7 @@ namespace zInvoiceTransformer
                     case DialogResult.Cancel:
                     default:
                         _templatesListBox.SelectedIndexChanged -= _templatesListBoxSelectionChanged;
-                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id.ToString() == _selectedTemplateForDisplay.Attribute("Id").Value);
+                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id == _selectedTemplateForDisplay.Id.ToString());
                         _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
                         return;
                 }
@@ -92,28 +95,28 @@ namespace zInvoiceTransformer
             {
                 var item = (TemplateListItem)_templatesListBox.SelectedItem;
 
-                _originalTemplate = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").FirstOrDefault(x => x.Attribute("Id").Value == item.Id);
+                _originalTemplate = _invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id);
                 CreateRemoteInvoiceSettingsElementIfRequired();
-                _selectedTemplateForDisplay = new XElement(_originalTemplate);
+                _selectedTemplateForDisplay =  _originalTemplate.DeepClone(); 
 
-                _nameTextBox.Text = _selectedTemplateForDisplay.Attribute("Name").Value;
-                _descriptionTextBox.Text = _selectedTemplateForDisplay.Attribute("Description").Value;
-                _activeCheckBox.Checked = _selectedTemplateForDisplay.Attribute("Active").Value == "1";
-                _sourceFolderTextBox.Text = _selectedTemplateForDisplay.Attribute("SourceFolder").Value;
-                _outputFolderTextBox.Text = _selectedTemplateForDisplay.Attribute("OutputFolder").Value;
-                _fieldDelimiterTextBox.Text = _selectedTemplateForDisplay.Attribute("Delimiter").Value;
-                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateForDisplay.Attribute("LbProcessingType").Value);
-                _hasHeaderCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasHeaderRecord").Value == "1";
-                _hasMasterCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasMasterRecord").Value == "1";
-                _hasFooterCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasSummaryRecord").Value == "1";
-                _uomCaseSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMCase").Value;
-                _uomEachSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMEach").Value;
-                _uomWeightSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMWeight").Value;
+                _nameTextBox.Text = _selectedTemplateForDisplay.Name;
+                _descriptionTextBox.Text = _selectedTemplateForDisplay.Description;
+                _activeCheckBox.Checked = _selectedTemplateForDisplay.Active == 1;
+                _sourceFolderTextBox.Text = _selectedTemplateForDisplay.SourceFolder;
+                _outputFolderTextBox.Text = _selectedTemplateForDisplay.OutputFolder;
+                _fieldDelimiterTextBox.Text = _selectedTemplateForDisplay.Delimiter;
+                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateForDisplay.LbProcessingType.ToString());
+                _hasHeaderCheckBox.Checked = _selectedTemplateForDisplay.HasHeaderRecord == 1;
+                _hasMasterCheckBox.Checked = _selectedTemplateForDisplay.HasMasterRecord == 1;
+                _hasFooterCheckBox.Checked = _selectedTemplateForDisplay.HasSummaryRecord == 1;
+                _uomCaseSymbolTextBox.Text = _selectedTemplateForDisplay.UoMCase;
+                _uomEachSymbolTextBox.Text = _selectedTemplateForDisplay.UoMEach;
+                _uomWeightSymbolTextBox.Text = _selectedTemplateForDisplay.UoMWeight;
 
                 if (_hasMasterCheckBox.Checked)
                 {
-                    _masterRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("MasterRow").Attribute("RecordTypeIdentifier").Value;
-                    _masterRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("MasterRow").Attribute("RecordTypePostion").Value);
+                    _masterRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.MasterRow.RecordTypeIdentifier;
+                    _masterRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.MasterRow.RecordTypePostion;
                 }
                 else
                 {
@@ -121,13 +124,13 @@ namespace zInvoiceTransformer
                     _masterRecordPositionNumericUpDown.Value = -1;
                 }
 
-                _detailRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("DetailFields").Attribute("RecordTypeIdentifier").Value;
-                _detailRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("DetailFields").Attribute("RecordTypePostion").Value);
+                _detailRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.DetailFields.RecordTypeIdentifier;
+                _detailRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.DetailFields.RecordTypePostion;
 
                 if (_hasFooterCheckBox.Checked)
                 {
-                    _footerRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("SummaryRow").Attribute("RecordTypeIdentifier").Value;
-                    _footerRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("SummaryRow").Attribute("RecordTypePostion").Value);
+                    _footerRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.SummaryRow.RecordTypeIdentifier;
+                    _footerRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.SummaryRow.RecordTypePostion;
                 }
                 else
                 {
@@ -135,7 +138,7 @@ namespace zInvoiceTransformer
                     _footerRecordPositionNumericUpDown.Value = -1;
                 }
 
-                var fieldNameDefinitions = _invoiceImportTemplates.Root.Element("Definitions").Element("FieldNames");
+                var fieldNameDefinitions = _invoiceImportTemplates.Definitions.FieldNames;
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.MasterRow));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.DetailFields));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.SummaryRow));
@@ -144,28 +147,27 @@ namespace zInvoiceTransformer
                 //var noOfDetailFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.DetailFields);
                 //var noOfFooterFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.SummaryRow);
 
-                var eachesConversionElement = _selectedTemplateForDisplay.Element("EachesConversion");
-                _useEachesConversionCheckbox.Checked = eachesConversionElement != null && eachesConversionElement.Attribute("enabled").Value == "1";
-                _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.Attribute("tag").Value : string.Empty;
+                var eachesConversionElement = _selectedTemplateForDisplay.EachesConversion;
+                _useEachesConversionCheckbox.Checked = eachesConversionElement != null && eachesConversionElement.enabled == 1;
+                _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.tag : string.Empty;
                 _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
                 
-                var transferProtocols = _invoiceImportTemplates.Root.Element("Definitions")
-                    .Element("RemoteTransferProtocolTypes")
-                    .Descendants("RemoteTransferProtocolType")
-                    .Select(el => new { id = Convert.ToInt32(el.Attribute("Id").Value), name = el.Attribute("Name").Value }).ToArray();
+                var transferProtocols = _invoiceImportTemplates.Definitions
+                    .RemoteTransferProtocolTypes
+                    .Select(el => new { id = Convert.ToInt32(el.Id), name = el.Name }).ToArray();
 
                 _protocolTypeComboBox.DataSource = transferProtocols;
                 _protocolTypeComboBox.DisplayMember = "name";
                 _protocolTypeComboBox.ValueMember = "id";
-                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("RemoteTransferProtocolTypeId").Value);
+                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateForDisplay.RemoteInvoiceSettings?.RemoteTransferProtocolTypeId);
 
-                _urlTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("url").Value;
-                _portTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("port").Value;
-                _usernameTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("username").Value;
-                _passwordTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("password").Value;
-                _keyfileLocationTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("keyfileLocation").Value;
-                _invoiceFilePrefixTextBox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("InvoiceFileCustomerPrefix").Value;
-                _remoteFolderTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("RemoteFolder").Value;
+                _urlTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.url;
+                _portTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.port.ToString();
+                _usernameTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.username;
+                _passwordTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.password;
+                _keyfileLocationTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.keyfileLocation;
+                _invoiceFilePrefixTextBox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.InvoiceFileCustomerPrefix;
+                _remoteFolderTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.RemoteFolder;
             }
 
             _templateFieldDefinitionsFlowLayoutPanel.ResumeLayout();
@@ -173,16 +175,18 @@ namespace zInvoiceTransformer
 
         private void CreateRemoteInvoiceSettingsElementIfRequired()
         {
-            if (_originalTemplate.Element("RemoteInvoiceSettings") == null)
-                _originalTemplate.Add(new XElement("RemoteInvoiceSettings",
-                    new XAttribute("RemoteTransferProtocolTypeId", 0),
-                    new XAttribute("url", ""),
-                    new XAttribute("port", 0),
-                    new XAttribute("username", ""),
-                    new XAttribute("password", ""),
-                    new XAttribute("keyfileLocation", ""),
-                    new XAttribute("RemoteFolder", ""),
-                    new XAttribute("InvoiceFileCustomerPrefix", "")));
+            if (_originalTemplate.RemoteInvoiceSettings == null)
+                _originalTemplate.RemoteInvoiceSettings = new InvoiceImportTemplatesTemplateRemoteInvoiceSettings
+                {
+                    InvoiceFileCustomerPrefix = "", 
+                    keyfileLocation = "", 
+                    password = "", 
+                    port = 0, 
+                    RemoteFolder = "",
+                    RemoteTransferProtocolTypeId = 0, 
+                    url = "", 
+                    username = ""
+                };
         }
 
         private int SetWeightProcessingRule(string weightProcessingRule)
@@ -217,31 +221,31 @@ namespace zInvoiceTransformer
             }
         }
 
-        private TemplateFieldDefinition[] CreateFieldDisplayItems(XElement fieldNameDefinitions, FieldRecordLocation fieldRecordLocation)
+        private TemplateFieldDefinition[] CreateFieldDisplayItems(InvoiceImportTemplatesDefinitionsFieldName[] fieldNameDefinitions, FieldRecordLocation fieldRecordLocation)
         {
             var templateFieldDefinitions = new List<TemplateFieldDefinition>();
-
-            foreach (var fieldElement in _selectedTemplateForDisplay.Element(fieldRecordLocation.ToString()).Descendants("Field"))
+            
+            foreach (var fieldElement in _selectedTemplateForDisplay..Element(fieldRecordLocation.ToString()).Descendants("Field"))
             {
-                XElement field = fieldElement;
-                var fieldName = fieldNameDefinitions.Descendants("FieldName").Where(f => f.Attribute("Id").Value == field.Attribute("FieldNameId").Value).FirstOrDefault();
+                object field = fieldElement;
+                var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == ((InvoiceImportTemplatesTemplateMasterRowField)field).FieldNameId);
 
                 int? directiveId = null;
                 if(field.Attribute("DirectiveId") != null)
-                    directiveId = int.Parse(field.Attribute("DirectiveId").Value);
+                    directiveId = int.Parse(field.Attribute("DirectiveId").);
                                 
-                templateFieldDefinitions.Add(new TemplateFieldDefinition(fieldName.Attribute("Name").Value,
-                                                                         int.Parse(fieldName.Attribute("Id").Value),
-                                                                         int.Parse(field.Element("Delimited").Attribute("Position").Value), 
+                templateFieldDefinitions.Add(new TemplateFieldDefinition(fieldName.Attribute("Name").,
+                                                                         int.Parse(fieldName.Attribute("Id").),
+                                                                         int.Parse(field.Element("Delimited").Attribute("Position").), 
                                                                          (int)fieldRecordLocation,
                                                                          directiveId));
             }
             return templateFieldDefinitions.ToArray();
         }
-
+        
         private void SaveTemplates()
         {
-            _originalTemplate.ReplaceWith(_selectedTemplateForDisplay);
+            _originalTemplate = _selectedTemplateForDisplay.DeepClone();
             _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
             _isInitialLoad = true;
             LoadTemplates();
@@ -260,9 +264,10 @@ namespace zInvoiceTransformer
             {
                 var item = (TemplateListItem)_templatesListBox.SelectedItem;
 
-                if(MessageBox.Show(this, string.Format("Delete selected template '{0}'", item.Name), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if(MessageBox.Show(this, $"Delete selected template '{item.Name}'", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Where(x => x.Attribute("Id").Value == item.Id).FirstOrDefault().Remove();
+                    _invoiceImportTemplates.Templates.ToList().RemoveAll(t => t.Id.ToString() == item.Id);
+                    //_invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id).Remove();
                     SaveTemplates();
                     LoadTemplates();
                 }
@@ -311,49 +316,50 @@ namespace zInvoiceTransformer
             if (_selectedTemplateForDisplay == null)
                 return;
 
-            _selectedTemplateForDisplay.Attribute("Name").Value = _nameTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Description").Value = _descriptionTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Active").Value = _activeCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Attribute("SourceFolder").Value = _sourceFolderTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("OutputFolder").Value = _outputFolderTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Delimiter").Value = _fieldDelimiterTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("LbProcessingType").Value = GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex);
-            _selectedTemplateForDisplay.Attribute("HasHeaderRecord").Value = _hasHeaderCheckBox.Checked ? "1" : "0";
+            _selectedTemplateForDisplay.Name = _nameTextBox.Text;
+            _selectedTemplateForDisplay.Description = _descriptionTextBox.Text;
+            _selectedTemplateForDisplay.Active = (byte)(_activeCheckBox.Checked ? 1 : 0);
+            _selectedTemplateForDisplay.SourceFolder = _sourceFolderTextBox.Text;
+            _selectedTemplateForDisplay.OutputFolder = _outputFolderTextBox.Text;
+            _selectedTemplateForDisplay.Delimiter = _fieldDelimiterTextBox.Text;
+            _selectedTemplateForDisplay.LbProcessingType = Convert.ToByte(GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex));
+            _selectedTemplateForDisplay.HasHeaderRecord = (byte)(_hasHeaderCheckBox.Checked ? 1 : 0);
 
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("RemoteTransferProtocolTypeId", _protocolTypeComboBox.SelectedValue);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("url", _urlTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("port", _portTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("username", _usernameTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("password", _passwordTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("keyfileLocation", _keyfileLocationTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("InvoiceFileCustomerPrefix", _invoiceFilePrefixTextBox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("RemoteFolder", _remoteFolderTextbox.Text);
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = (byte)_protocolTypeComboBox.SelectedValue;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.url = _urlTextbox.Text;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.port = Convert.ToInt32(_portTextbox.Text);
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.username = _usernameTextbox.Text;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.password = _passwordTextbox.Text;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.keyfileLocation = _keyfileLocationTextbox.Text;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.InvoiceFileCustomerPrefix = _invoiceFilePrefixTextBox.Text;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteFolder = _remoteFolderTextbox.Text;
 
-            _selectedTemplateForDisplay.Attribute("HasMasterRecord").Value = _hasMasterCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypePostion", _masterRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypeIdentifier", _masterRecordIdentifierTextBox.Text);
+            _selectedTemplateForDisplay.HasMasterRecord = (byte)(_hasMasterCheckBox.Checked ? 1 : 0);
+            _selectedTemplateForDisplay.MasterRow.RecordTypePostion = (sbyte)_masterRecordPositionNumericUpDown.Value;
+            _selectedTemplateForDisplay.MasterRow.RecordTypeIdentifier = _masterRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.Attribute("HasSummaryRecord").Value = _hasFooterCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Element("SummaryRow").SetAttributeValue("RecordTypePostion", _footerRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("SummaryRow").SetAttributeValue("RecordTypeIdentifier", _footerRecordIdentifierTextBox.Text);
+            _selectedTemplateForDisplay.HasSummaryRecord = (byte)(_hasFooterCheckBox.Checked ? 1 : 0);
+            _selectedTemplateForDisplay.SummaryRow.RecordTypePostion = (sbyte)_footerRecordPositionNumericUpDown.Value;
+            _selectedTemplateForDisplay.SummaryRow.RecordTypeIdentifier = _footerRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.Element("DetailFields").SetAttributeValue("RecordTypePostion", _detailRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("DetailFields").SetAttributeValue("RecordTypeIdentifier", _detailRecordIdentifierTextBox.Text);
+            _selectedTemplateForDisplay.DetailFields.RecordTypePostion = (sbyte)_detailRecordPositionNumericUpDown.Value;
+            _selectedTemplateForDisplay.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
 
+            //????
+            _selectedTemplateForDisplay.MasterRow.RemoveNodes();
+            _selectedTemplateForDisplay.DetailFields.RemoveNodes();
+            _selectedTemplateForDisplay.SummaryRow.RemoveNodes();
 
-            _selectedTemplateForDisplay.Element("MasterRow").RemoveNodes();
-            _selectedTemplateForDisplay.Element("DetailFields").RemoveNodes();
-            _selectedTemplateForDisplay.Element("SummaryRow").RemoveNodes();
-
-            if (_selectedTemplateForDisplay.Elements().FirstOrDefault(e => e.Name == "EachesConversion") == null)
+            if (_selectedTemplateForDisplay.EachesConversion == null)
             {
-                XElement element = new XElement("EachesConversion");
-                element.Add(new XAttribute("enabled", "0"));
-                element.Add(new XAttribute("tag", "*"));
-                _selectedTemplateForDisplay.Add(element);
+                _selectedTemplateForDisplay.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
+                {
+                    enabled = 0,
+                    tag = "*"
+                };
             }
-            _selectedTemplateForDisplay.Element("EachesConversion").SetAttributeValue("enabled", _useEachesConversionCheckbox.Checked ? "1" : "0");
-            _selectedTemplateForDisplay.Element("EachesConversion").SetAttributeValue("tag", _eachesConversionTagTextBox.Text);
+            _selectedTemplateForDisplay.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
+            _selectedTemplateForDisplay.EachesConversion.tag = _eachesConversionTagTextBox.Text;
 
             XElement el;
 
@@ -427,7 +433,7 @@ namespace zInvoiceTransformer
         private void _newTemplate_Click(object sender, EventArgs e)
         {
             var newTemplate = new XElement(_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").First());
-            int maxId = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Max(x => int.Parse(x.Attribute("Id").Value));
+            int maxId = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Max(x => int.Parse(x.Attribute("Id").));
 
             newTemplate.Attribute("Id").SetValue(maxId + 1);
             newTemplate.Attribute("Name").SetValue("New Template");
@@ -448,7 +454,7 @@ namespace zInvoiceTransformer
             var fieldDefs = _invoiceImportTemplates.Root.Element("Definitions").Element("FieldNames").Descendants("FieldName");
             foreach (var field in fieldDefs)
             {
-                el.Attribute("FieldNameId").SetValue(field.Attribute("Id").Value);
+                el.Attribute("FieldNameId").SetValue(field.Attribute("Id").);
                 el.Element("Delimited").Attribute("Position").SetValue("0");
 
                 newTemplate.Element(FieldRecordLocation.DetailFields.ToString()).Add(new XElement(el));
@@ -464,7 +470,7 @@ namespace zInvoiceTransformer
             if (SelectedTemplateHasEdits())
             {
                 var result = MessageBox.Show(this,
-                                string.Format("The selected template '{0}' has changed.\nSave changes before closing?", _selectedTemplateForDisplay.Attribute("Name").Value),
+                                string.Format("The selected template '{0}' has changed.\nSave changes before closing?", _selectedTemplateForDisplay.Attribute("Name").),
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
