@@ -79,9 +79,7 @@ namespace zInvoiceTransformer
         {
             LoadTemplates();
             _importAppLocation = ImportTemplates.ImportSettings.ImportAppliction.FileName;
-            //_importAppLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("FileName").Value;
             _importAppInvoiceFileLocation = ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation;
-            //_importAppInvoiceFileLocation = _invoiceImportTemplates.Root.Element("ImportSettings").Element("ImportAppliction").Attribute("InvoiceFileLocation").Value;
         }
         
         public void LoadTemplates()
@@ -99,25 +97,17 @@ namespace zInvoiceTransformer
                 throw;
             }
 
-            //var templatesStringReader = new StringReader(templatesXml);
             try
             {
                 ImportTemplates = templatesXml.ParseXml<InvoiceImportTemplates>();
-                //_invoiceImportTemplates = XDocument.Load(templatesStringReader);
             }
             catch (Exception ex)
             {
                 Log.LogThis($"Error loading xml from invoice templates file: {ex}", eloglevel.error);
                 throw;
             }
-            //finally
-            //{
-            //    templatesStringReader.Close();
-            //}
-            Log.LogThis($"{ImportTemplates.Templates.Count()} invoice templates loaded ", eloglevel.info);
             
-            //Log.LogThis(
-            //    $"{_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count()} invoice templates loaded ", eloglevel.info);
+            Log.LogThis($"{ImportTemplates.Templates.Count()} invoice templates loaded ", eloglevel.info);
         }
 
         public TemplateListItem[] GetAllTemplatesArray()
@@ -305,7 +295,7 @@ namespace zInvoiceTransformer
             ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation = _importAppInvoiceFileLocation;
 
             // TODO: serialise and save 
-            ImportTemplates.Save(InvoiceImportTemplatePath);
+            ImportTemplates.Save<InvoiceImportTemplates>(InvoiceImportTemplatePath);
             
             IsDirty = false;
         }

@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using System;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using zInvoiceTransformer.Comms;
 using ZinvoiceTransformer.XmlHelpers;
 using ZinvoiceTransformer.XmlModels;
@@ -18,11 +16,6 @@ namespace zInvoiceTransformer
         InvoiceImportTemplatesTemplate _originalTemplate;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
         bool _isInitialLoad;
-        string _fieldTemplate =
-@"<Field FieldNameId="""" > 
-    <Delimited Position="""" />
-  </Field>";
-        
 
         public TemplateEditor(InvoiceTemplateModel invoiceTemplateModel)
         {
@@ -224,29 +217,73 @@ namespace zInvoiceTransformer
         private TemplateFieldDefinition[] CreateFieldDisplayItems(InvoiceImportTemplatesDefinitionsFieldName[] fieldNameDefinitions, FieldRecordLocation fieldRecordLocation)
         {
             var templateFieldDefinitions = new List<TemplateFieldDefinition>();
-            
-            foreach (var fieldElement in _selectedTemplateForDisplay..Element(fieldRecordLocation.ToString()).Descendants("Field"))
-            {
-                object field = fieldElement;
-                var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == ((InvoiceImportTemplatesTemplateMasterRowField)field).FieldNameId);
 
-                int? directiveId = null;
-                if(field.Attribute("DirectiveId") != null)
-                    directiveId = int.Parse(field.Attribute("DirectiveId").);
-                                
-                templateFieldDefinitions.Add(new TemplateFieldDefinition(fieldName.Attribute("Name").,
-                                                                         int.Parse(fieldName.Attribute("Id").),
-                                                                         int.Parse(field.Element("Delimited").Attribute("Position").), 
-                                                                         (int)fieldRecordLocation,
-                                                                         directiveId));
+            switch (fieldRecordLocation)
+            {
+                case FieldRecordLocation.MasterRow:
+                    if (_selectedTemplateForDisplay.MasterRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateForDisplay.MasterRow.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
+
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+                
+                case FieldRecordLocation.DetailFields:
+                    if (_selectedTemplateForDisplay.DetailFields.Field != null)
+                        foreach (var fieldElement in _selectedTemplateForDisplay.DetailFields.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
+
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+
+                case FieldRecordLocation.SummaryRow:
+                    if (_selectedTemplateForDisplay.SummaryRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateForDisplay.SummaryRow.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
+
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(fieldRecordLocation), fieldRecordLocation, null);
             }
+            
             return templateFieldDefinitions.ToArray();
         }
         
         private void SaveTemplates()
         {
             _originalTemplate = _selectedTemplateForDisplay.DeepClone();
-            _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
+            _invoiceImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
             _isInitialLoad = true;
             LoadTemplates();
             _isInitialLoad = false;
@@ -325,7 +362,7 @@ namespace zInvoiceTransformer
             _selectedTemplateForDisplay.LbProcessingType = Convert.ToByte(GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex));
             _selectedTemplateForDisplay.HasHeaderRecord = (byte)(_hasHeaderCheckBox.Checked ? 1 : 0);
 
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = (byte)_protocolTypeComboBox.SelectedValue;
+            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = Convert.ToByte(_protocolTypeComboBox.SelectedValue);
             _selectedTemplateForDisplay.RemoteInvoiceSettings.url = _urlTextbox.Text;
             _selectedTemplateForDisplay.RemoteInvoiceSettings.port = Convert.ToInt32(_portTextbox.Text);
             _selectedTemplateForDisplay.RemoteInvoiceSettings.username = _usernameTextbox.Text;
@@ -346,9 +383,9 @@ namespace zInvoiceTransformer
             _selectedTemplateForDisplay.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
 
             //????
-            _selectedTemplateForDisplay.MasterRow.RemoveNodes();
-            _selectedTemplateForDisplay.DetailFields.RemoveNodes();
-            _selectedTemplateForDisplay.SummaryRow.RemoveNodes();
+            _selectedTemplateForDisplay.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
+            _selectedTemplateForDisplay.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
+            _selectedTemplateForDisplay.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
 
             if (_selectedTemplateForDisplay.EachesConversion == null)
             {
@@ -361,33 +398,70 @@ namespace zInvoiceTransformer
             _selectedTemplateForDisplay.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
             _selectedTemplateForDisplay.EachesConversion.tag = _eachesConversionTagTextBox.Text;
 
-            XElement el;
-
             var fieldDefs = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
             foreach (var field in fieldDefs)
             {
-                el = XElement.Parse(_fieldTemplate);
-                el.Attribute("FieldNameId").SetValue(field.FieldNameId);
+                switch (field.FieldLocation)
+                {
+                    case FieldRecordLocation.MasterRow:
+                        _selectedTemplateForDisplay.MasterRow.Field?.ToList().Add(
+                            new InvoiceImportTemplatesTemplateMasterRowField
+                            {
+                                FieldNameId = (byte) field.FieldNameId,
+                                DirectiveId = (byte) (field.DirectiveId ?? new byte()),
+                                Delimited = new InvoiceImportTemplatesTemplateMasterRowFieldDelimited
+                                {
+                                    Position = (byte) field.FieldPosition
+                                }
+                            });
+                        break;
+                    
+                    case FieldRecordLocation.DetailFields:
+                        _selectedTemplateForDisplay.DetailFields.Field?.ToList().
+                            Add(new InvoiceImportTemplatesTemplateDetailFieldsField
+                            {
+                                FieldNameId = (byte)field.FieldNameId,
+                                DirectiveId = (byte) (field.DirectiveId ?? new byte()),
+                                Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited
+                                {
+                                    Position = (byte) field.FieldPosition
+                                }
 
-                if (field.DirectiveId != null)
-                    el.Add(new XAttribute("DirectiveId", field.DirectiveId));
-
-                el.Element("Delimited").Attribute("Position").SetValue(field.FieldPosition);
-
-                _selectedTemplateForDisplay.Element(field.FieldLocation.ToString()).Add(new XElement(el));
+                            });
+                        break;
+                    
+                    case FieldRecordLocation.SummaryRow:
+                        _selectedTemplateForDisplay.SummaryRow.Field?.ToList().
+                            Add(new InvoiceImportTemplatesTemplateSummaryRowField()
+                            {
+                                FieldNameId = (byte)field.FieldNameId,
+                                DirectiveId = (byte)(field.DirectiveId ?? new byte()),
+                                Delimited = new InvoiceImportTemplatesTemplateSummaryRowFieldDelimited()
+                                {
+                                    Position = (byte)field.FieldPosition
+                                }
+                            });
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
+
+            _invoiceImportTemplates.Templates.ToList()
+                .Remove(_invoiceImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateForDisplay.Id));
+
+            _invoiceImportTemplates.Templates.ToList().Add(_selectedTemplateForDisplay);
         }
 
         private bool SelectedTemplateHasEdits()
         {
-            //_originalTemplate = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").
-            //                        Where(x => x.Attribute("Id").Value == _selectedTemplateForDisplay.Attribute("Id").Value).FirstOrDefault();
+            //_originalTemplate = _invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id == _selectedTemplateForDisplay.Id);
 
-            if (!XNode.DeepEquals(_originalTemplate, _selectedTemplateForDisplay))
-            {
-                return true;
-            }
-            return false;
+            //if (!XNode.DeepEquals(_originalTemplate, _selectedTemplateForDisplay))
+            //{
+            //    return true;
+            //}
+            return true;
         }
 
         private void _sourceFolderButton_Click(object sender, System.EventArgs e)
@@ -432,35 +506,35 @@ namespace zInvoiceTransformer
 
         private void _newTemplate_Click(object sender, EventArgs e)
         {
-            var newTemplate = new XElement(_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").First());
-            int maxId = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Max(x => int.Parse(x.Attribute("Id").));
+            var newTemplate = new InvoiceImportTemplatesTemplate();
+            int maxId = _invoiceImportTemplates.Templates.Max(x => x.Id);
 
-            newTemplate.Attribute("Id").SetValue(maxId + 1);
-            newTemplate.Attribute("Name").SetValue("New Template");
-            newTemplate.Attribute("SourceFolder").SetValue("");
-            newTemplate.Attribute("OutputFolder").SetValue(""); ;
-            newTemplate.Attribute("Delimiter").SetValue(","); ;
-            newTemplate.Attribute("LbProcessingType").SetValue("3");
-            newTemplate.Attribute("HasHeaderRecord").SetValue("0");
-            newTemplate.Attribute("HasMasterRecord").SetValue("0");
-            newTemplate.Attribute("HasSummaryRecord").SetValue("0"); ;
+            newTemplate.Id = (byte) (maxId + 1);
+            newTemplate.Name = "New Template";
+            newTemplate.SourceFolder = "";
+            newTemplate.OutputFolder = "";
+            newTemplate.Delimiter = ",";
+            newTemplate.LbProcessingType = 3;
+            newTemplate.HasHeaderRecord = 0;
+            newTemplate.HasMasterRecord = 0;
+            newTemplate.HasSummaryRecord = 0;
 
-            newTemplate.Element("MasterRow").RemoveNodes();
-            newTemplate.Element("DetailFields").RemoveNodes();
-            newTemplate.Element("SummaryRow").RemoveNodes();
+            newTemplate.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
+            newTemplate.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
+            newTemplate.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
 
-            XElement el = XElement.Parse(_fieldTemplate);
-
-            var fieldDefs = _invoiceImportTemplates.Root.Element("Definitions").Element("FieldNames").Descendants("FieldName");
+            //XElement el = XElement.Parse(_fieldTemplate);
+            var el = new InvoiceImportTemplatesTemplateDetailFieldsField();
+            var fieldDefs = _invoiceImportTemplates.Definitions.FieldNames;
             foreach (var field in fieldDefs)
             {
-                el.Attribute("FieldNameId").SetValue(field.Attribute("Id").);
-                el.Element("Delimited").Attribute("Position").SetValue("0");
+                el.FieldNameId = field.Id;
+                el.Delimited.Position = 0;
 
-                newTemplate.Element(FieldRecordLocation.DetailFields.ToString()).Add(new XElement(el));
+                newTemplate.DetailFields.Field.ToList().Add(el);
             }
-
-            _invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
+            _invoiceImportTemplates.Templates.ToList().Add(newTemplate);
+            //_invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
             SaveTemplates();
             LoadTemplates();
         }
@@ -470,7 +544,7 @@ namespace zInvoiceTransformer
             if (SelectedTemplateHasEdits())
             {
                 var result = MessageBox.Show(this,
-                                string.Format("The selected template '{0}' has changed.\nSave changes before closing?", _selectedTemplateForDisplay.Attribute("Name").),
+                    $"The selected template '{_selectedTemplateForDisplay.Name}' has changed.\nSave changes before closing?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);

@@ -10,6 +10,8 @@
         private InvoiceImportTemplatesTemplateSummaryRowFieldDelimited delimitedField;
 
         private byte fieldNameIdField;
+        private byte directiveIdField;
+        private bool directiveIdFieldSpecified;
 
         /// <remarks/>
         public InvoiceImportTemplatesTemplateSummaryRowFieldDelimited Delimited
@@ -35,6 +37,34 @@
             set
             {
                 this.fieldNameIdField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public byte DirectiveId
+        {
+            get
+            {
+                return this.directiveIdField;
+            }
+            set
+            {
+                this.directiveIdField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool DirectiveIdSpecified
+        {
+            get
+            {
+                return this.directiveIdFieldSpecified;
+            }
+            set
+            {
+                this.directiveIdFieldSpecified = value;
             }
         }
     }

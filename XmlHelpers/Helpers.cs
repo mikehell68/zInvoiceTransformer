@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -20,12 +16,18 @@ namespace ZinvoiceTransformer.XmlHelpers
             stream.Position = 0;
             return stream;
         }
-
-
+        
         public static T ParseXml<T>(this string @this) where T : class
         {
             var reader = XmlReader.Create(@this.Trim().ToStream(), new XmlReaderSettings() { ConformanceLevel = ConformanceLevel.Document });
             return new XmlSerializer(typeof(T)).Deserialize(reader) as T;
+        }
+
+        public static void Save<T>(this object @this, string path) where T : class
+        {
+            var file = File.Create(path);
+            new XmlSerializer(typeof(T)).Serialize(file, @this);
+            file.Close();
         }
 
         public static T DeepClone<T>(this T obj)
