@@ -132,7 +132,7 @@ namespace zInvoiceTransformer
 
                 var sr = new StreamReader(file);
 
-                if (_selectedTemplate.HasHeaderRecord == 1)
+                if (_selectedTemplate.HasHeaderRecord)
                 {
                     sr.ReadLine(); //advance past the header line
                 }
@@ -148,7 +148,7 @@ namespace zInvoiceTransformer
 
                     newSplitLine.Clear();
 
-                    if (_selectedTemplate.HasMasterRecord == 1 && IsMasterRow(splitOriginalLine))
+                    if (_selectedTemplate.HasMasterRecord && IsMasterRow(splitOriginalLine))
                     {
                         invoiceNoTemplateField = _selectedTemplate.MasterRow.Field.FirstOrDefault(x => x.FieldNameId == 1);
                         _invoiceNumber = splitOriginalLine[invoiceNoTemplateField.Delimited.Position];
@@ -158,7 +158,7 @@ namespace zInvoiceTransformer
                     }
                     else if (IsDetailRow(splitOriginalLine))
                     {
-                        if (_selectedTemplate.HasMasterRecord == 1)
+                        if (_selectedTemplate.HasMasterRecord)
                         {
                             newSplitLine.Add(_invoiceNumber);
                             SetNewFieldPosition(invoiceNoTemplateField.FieldNameId, ref newFieldPos);

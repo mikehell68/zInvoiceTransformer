@@ -112,12 +112,12 @@ namespace zInvoiceTransformer
 
         public TemplateListItem[] GetAllTemplatesArray()
         {
-            return ImportTemplates.Templates.Select(
+            return ImportTemplates.Templates.Where(t => t.Active).Select(
                 template => new TemplateListItem
                 {
                     Id = template.Id.ToString(),
                     Name = template.Name,
-                    IsInUse = template.Active == 1
+                    IsInUse = template.Active
                 }).ToArray();
 
             //if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
@@ -173,9 +173,9 @@ namespace zInvoiceTransformer
 
         public void SetSelectedTemplate(byte selectedTemplateId)
         {
-            var selectedTemplate = ImportTemplates.Templates.FirstOrDefault(t => t.Id == selectedTemplateId);
-            SelectedTemplateName = selectedTemplate == null ? "" : selectedTemplate.Name;
-            SelectedTemplateDescription = selectedTemplate == null ? "" : selectedTemplate.Description;
+            SelectedTemplate = ImportTemplates.Templates.FirstOrDefault(t => t.Id == selectedTemplateId);
+            SelectedTemplateName = SelectedTemplate == null ? "" : SelectedTemplate.Name;
+            SelectedTemplateDescription = SelectedTemplate == null ? "" : SelectedTemplate.Description;
             IsDirty = false;
         }
 

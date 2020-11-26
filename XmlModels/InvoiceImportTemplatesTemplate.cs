@@ -192,15 +192,15 @@ namespace ZinvoiceTransformer.XmlModels
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte Active
+        public bool Active
         {
             get
             {
-                return this.activeField;
+                return Convert.ToBoolean(activeField);
             }
             set
             {
-                this.activeField = value;
+                activeField = Convert.ToByte(value);
             }
         }
 
@@ -304,43 +304,43 @@ namespace ZinvoiceTransformer.XmlModels
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte HasHeaderRecord
+        public bool HasHeaderRecord
         {
             get
             {
-                return this.hasHeaderRecordField;
+                return Convert.ToBoolean(hasHeaderRecordField);
             }
             set
             {
-                this.hasHeaderRecordField = value;
+                this.hasHeaderRecordField = Convert.ToByte(value);
             }
         }
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte HasMasterRecord
+        public bool HasMasterRecord
         {
             get
             {
-                return this.hasMasterRecordField;
+                return Convert.ToBoolean(hasMasterRecordField);
             }
             set
             {
-                this.hasMasterRecordField = value;
+                this.hasMasterRecordField = Convert.ToByte(value);
             }
         }
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
-        public byte HasSummaryRecord
+        public bool HasSummaryRecord
         {
             get
             {
-                return this.hasSummaryRecordField;
+                return Convert.ToBoolean(hasSummaryRecordField);
             }
             set
             {
-                this.hasSummaryRecordField = value;
+                this.hasSummaryRecordField = Convert.ToByte(value);
             }
         }
 

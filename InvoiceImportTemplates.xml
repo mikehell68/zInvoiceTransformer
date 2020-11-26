@@ -31,7 +31,7 @@
     </ImportOrder>
   </ImportSettings>
   <Templates>
-    <Template Id="1" Name="Roma" Active="1" TemplateVersion="1" Description="Roma Vistar invoice short format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+    <Template Id="1" Name="Roma short" Active="1" TemplateVersion="1" Description="Roma Vistar invoice short format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
       <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
         <Field FieldNameId="1">
           <Delimited Position="2" />
@@ -80,7 +80,7 @@
       </TemplateTransform>
       <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
     </Template>
-    <Template Id="4" Name="Roma" Active="1" TemplateVersion="2" Description="Roma Vistar invoice long format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="0" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+    <Template Id="4" Name="Roma long" Active="1" TemplateVersion="2" Description="Roma Vistar invoice long format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="0" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
       <MasterRow RecordTypePostion="-1" RecordTypeIdentifier="" />
       <DetailFields RecordTypePostion="-1" RecordTypeIdentifier="">
         <Field FieldNameId="1">
