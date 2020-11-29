@@ -150,41 +150,45 @@
             // 
             // _portLabel
             // 
-            this._portLabel.AutoSize = true;
+            this._portLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._portLabel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this._portLabel.Location = new System.Drawing.Point(164, 35);
             this._portLabel.Name = "_portLabel";
-            this._portLabel.Size = new System.Drawing.Size(42, 20);
+            this._portLabel.Size = new System.Drawing.Size(233, 20);
             this._portLabel.TabIndex = 11;
             this._portLabel.Text = "Port:";
             // 
             // _hostLabel
             // 
-            this._hostLabel.AutoSize = true;
+            this._hostLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._hostLabel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this._hostLabel.Location = new System.Drawing.Point(164, 9);
             this._hostLabel.Name = "_hostLabel";
-            this._hostLabel.Size = new System.Drawing.Size(47, 20);
+            this._hostLabel.Size = new System.Drawing.Size(233, 20);
             this._hostLabel.TabIndex = 10;
             this._hostLabel.Text = "Host:";
             // 
             // _destinationLabel
             // 
-            this._destinationLabel.AutoSize = true;
+            this._destinationLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._destinationLabel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this._destinationLabel.Location = new System.Drawing.Point(164, 88);
             this._destinationLabel.Name = "_destinationLabel";
-            this._destinationLabel.Size = new System.Drawing.Size(138, 20);
+            this._destinationLabel.Size = new System.Drawing.Size(233, 20);
             this._destinationLabel.TabIndex = 9;
             this._destinationLabel.Text = "Destination folder:";
             // 
             // _remoteLabel
             // 
-            this._remoteLabel.AutoSize = true;
+            this._remoteLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this._remoteLabel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this._remoteLabel.Location = new System.Drawing.Point(164, 62);
             this._remoteLabel.Name = "_remoteLabel";
-            this._remoteLabel.Size = new System.Drawing.Size(114, 20);
+            this._remoteLabel.Size = new System.Drawing.Size(233, 20);
             this._remoteLabel.TabIndex = 8;
             this._remoteLabel.Text = "Remote folder:";
             // 
@@ -239,7 +243,7 @@
             // 
             this._closeFormButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this._closeFormButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this._closeFormButton.Location = new System.Drawing.Point(290, 3);
+            this._closeFormButton.Location = new System.Drawing.Point(290, 11);
             this._closeFormButton.Name = "_closeFormButton";
             this._closeFormButton.Size = new System.Drawing.Size(111, 54);
             this._closeFormButton.TabIndex = 1;
@@ -249,7 +253,7 @@
             // _downloadFilesButton
             // 
             this._downloadFilesButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this._downloadFilesButton.Location = new System.Drawing.Point(112, 6);
+            this._downloadFilesButton.Location = new System.Drawing.Point(112, 11);
             this._downloadFilesButton.Name = "_downloadFilesButton";
             this._downloadFilesButton.Size = new System.Drawing.Size(170, 54);
             this._downloadFilesButton.TabIndex = 0;
@@ -259,7 +263,7 @@
             // 
             // _refreshListButton
             // 
-            this._refreshListButton.Location = new System.Drawing.Point(7, 6);
+            this._refreshListButton.Location = new System.Drawing.Point(7, 11);
             this._refreshListButton.Name = "_refreshListButton";
             this._refreshListButton.Size = new System.Drawing.Size(96, 54);
             this._refreshListButton.TabIndex = 3;

@@ -20,8 +20,6 @@ namespace zInvoiceTransformer
         private static InvoiceTemplateModel _invoiceTemplateModel;
         IClientTransferProtocol _clientTransferProtocol;
 
-        private InvoiceImportTemplates _importTemplates;
-
         public InvoiceImportMain()
         {
             InitializeComponent();
@@ -63,11 +61,16 @@ namespace zInvoiceTransformer
 
         void InvoiceTransformer_Load(object sender, EventArgs e)
         {
-
-            _nameTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateName", false, DataSourceUpdateMode.Never));
-            _descriptionTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateDescription", false, DataSourceUpdateMode.Never));
-            
+            BindControls();
             LoadAndDisplayTemplates();
+        }
+
+        void BindControls()
+        {
+            _nameTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateName", false,
+                DataSourceUpdateMode.Never));
+            _descriptionTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateDescription",
+                false, DataSourceUpdateMode.Never));
         }
 
         private void LoadAndDisplayTemplates()

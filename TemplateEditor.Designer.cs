@@ -1039,6 +1039,7 @@
             this._templatesListBox.Name = "_templatesListBox";
             this._templatesListBox.Size = new System.Drawing.Size(300, 708);
             this._templatesListBox.TabIndex = 0;
+            this._templatesListBox.Click += new System.EventHandler(this._templatesListBox_Click);
             // 
             // _templateSelectorTopPanel
             // 

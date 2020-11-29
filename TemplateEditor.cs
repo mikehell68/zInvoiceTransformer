@@ -11,7 +11,7 @@ namespace zInvoiceTransformer
 {
     public partial class TemplateEditor : Form
     {
-        static InvoiceImportTemplates _invoiceImportTemplates;
+        //static InvoiceImportTemplates _invoiceImportTemplates;
         InvoiceImportTemplatesTemplate _selectedTemplateForDisplay;
         InvoiceImportTemplatesTemplate _originalTemplate;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
@@ -42,16 +42,14 @@ namespace zInvoiceTransformer
 
         private void LoadTemplates(string selectedTemplateId = null)
         {
-            _invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
+            //_invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
 
-            var allTemplateListItems = _invoiceImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
+            var allTemplateListItems = _invoiceTemplateModel.ImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
 
-            if (string.IsNullOrEmpty(selectedTemplateId) && _invoiceTemplateModel.SelectedTemplate != null)
-                SelectedTemplateId = _invoiceTemplateModel.SelectedTemplate.Id.ToString();
-            else
-                SelectedTemplateId = selectedTemplateId;
+            _templatesListBox.SelectedItem =
+                allTemplateListItems.FirstOrDefault(i => i.Id == _invoiceTemplateModel.SelectedTemplate.Id.ToString());
         }
 
         void _templatesListBoxSelectionChanged(object sender, System.EventArgs e)
@@ -102,7 +100,7 @@ namespace zInvoiceTransformer
             {
                 var item = (TemplateListItem)_templatesListBox.SelectedItem;
 
-                _originalTemplate = _invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id);
+                _originalTemplate = _invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id);
                 CreateRemoteInvoiceSettingsElementIfRequired();
                 _selectedTemplateForDisplay =  _originalTemplate.DeepClone(); 
 
@@ -145,7 +143,7 @@ namespace zInvoiceTransformer
                     _footerRecordPositionNumericUpDown.Value = -1;
                 }
 
-                var fieldNameDefinitions = _invoiceImportTemplates.Definitions.FieldNames;
+                var fieldNameDefinitions = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.MasterRow));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.DetailFields));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.SummaryRow));
@@ -159,7 +157,7 @@ namespace zInvoiceTransformer
                 _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.tag : string.Empty;
                 _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
                 
-                var transferProtocols = _invoiceImportTemplates.Definitions
+                var transferProtocols = _invoiceTemplateModel.ImportTemplates.Definitions
                     .RemoteTransferProtocolTypes
                     .Select(el => new { id = Convert.ToInt32(el.Id), name = el.Name }).ToArray();
 
@@ -297,7 +295,8 @@ namespace zInvoiceTransformer
         private void SaveTemplates()
         {
             _originalTemplate = _selectedTemplateForDisplay.DeepClone();
-            _invoiceImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
+
+            _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
             _isInitialLoad = true;
             LoadTemplates();
             _isInitialLoad = false;
@@ -317,7 +316,7 @@ namespace zInvoiceTransformer
 
                 if(MessageBox.Show(this, $"Delete selected template '{item.Name}'", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    _invoiceImportTemplates.Templates.ToList().RemoveAll(t => t.Id.ToString() == item.Id);
+                    _invoiceTemplateModel.ImportTemplates.Templates.ToList().RemoveAll(t => t.Id.ToString() == item.Id);
                     //_invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id).Remove();
                     SaveTemplates();
                     LoadTemplates();
@@ -461,10 +460,10 @@ namespace zInvoiceTransformer
                 }
             }
 
-            var templateToUpdateIndex =_invoiceImportTemplates.Templates.ToList()
-                .IndexOf(_invoiceImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateForDisplay.Id));
+            var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
+                .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateForDisplay.Id));
 
-            _invoiceImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateForDisplay;
+            _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateForDisplay;
         }
 
         private bool SelectedTemplateHasEdits()
@@ -496,22 +495,6 @@ namespace zInvoiceTransformer
                 _outputFolderTextBox.Text = _folderDialog.SelectedPath;
         }
 
-        public string SelectedTemplateId
-        {
-            set
-            {
-                foreach (var item in _templatesListBox.Items)
-                {
-                    var it = (TemplateListItem)item;
-                    if (it.Id == value)
-                    {
-                        _templatesListBox.SelectedItem = it;
-                        break;
-                    }
-                }
-            }
-        }
-
         private void _hasMasterCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             _masterRecordIdentifierTextBox.Enabled = _masterRecordPositionNumericUpDown.Enabled = _hasMasterCheckBox.Checked;
@@ -525,7 +508,7 @@ namespace zInvoiceTransformer
         private void _newTemplate_Click(object sender, EventArgs e)
         {
             var newTemplate = new InvoiceImportTemplatesTemplate();
-            int maxId = _invoiceImportTemplates.Templates.Max(x => x.Id);
+            int maxId = _invoiceTemplateModel.ImportTemplates.Templates.Max(x => x.Id);
 
             newTemplate.Id = (byte) (maxId + 1);
             newTemplate.Name = "New Template";
@@ -543,7 +526,7 @@ namespace zInvoiceTransformer
 
             //XElement el = XElement.Parse(_fieldTemplate);
             var el = new InvoiceImportTemplatesTemplateDetailFieldsField();
-            var fieldDefs = _invoiceImportTemplates.Definitions.FieldNames;
+            var fieldDefs = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
             foreach (var field in fieldDefs)
             {
                 el.FieldNameId = field.Id;
@@ -551,7 +534,7 @@ namespace zInvoiceTransformer
 
                 newTemplate.DetailFields.Field.ToList().Add(el);
             }
-            _invoiceImportTemplates.Templates.ToList().Add(newTemplate);
+            _invoiceTemplateModel.ImportTemplates.Templates.ToList().Add(newTemplate);
             //_invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
             SaveTemplates();
             LoadTemplates();
@@ -584,6 +567,12 @@ namespace zInvoiceTransformer
         private void _useEachesConversionCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
+        }
+
+        private void _templatesListBox_Click(object sender, EventArgs e)
+        {
+            //if(SelectedTemplateId == ((TemplateListItem)_templatesListBox.SelectedItem).Id)
+
         }
     }
 }
