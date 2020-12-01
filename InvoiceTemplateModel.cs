@@ -156,7 +156,7 @@ namespace zInvoiceTransformer
         //    return new List<XElement>();
         //}
 
-        public InvoiceImportTemplatesTemplate GetTemplate(string templateId)
+        public InvoiceImportTemplatesTemplate GetTemplate(int templateId)
         {
             InvoiceImportTemplatesTemplate template = null;
 
@@ -294,7 +294,6 @@ namespace zInvoiceTransformer
             ImportTemplates.ImportSettings.ImportAppliction.FileName = _importAppLocation;
             ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation = _importAppInvoiceFileLocation;
 
-            // TODO: serialise and save 
             ImportTemplates.Save<InvoiceImportTemplates>(InvoiceImportTemplatePath);
             
             IsDirty = false;

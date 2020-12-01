@@ -43,6 +43,12 @@
     <ApplicationIcon>invoiceTransform.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnyClone, Version=1.0.39.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\AnyClone.1.0.39\lib\net45\AnyClone.dll</HintPath>
+    </Reference>
+    <Reference Include="AnyDiff, Version=1.0.83.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\AnyDiff.1.0.83\lib\net45\AnyDiff.dll</HintPath>
+    </Reference>
     <Reference Include="Renci.SshNet, Version=2016.1.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
       <HintPath>packages\SSH.NET.2016.1.0\lib\net40\Renci.SshNet.dll</HintPath>
     </Reference>

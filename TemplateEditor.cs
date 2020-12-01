@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System;
 using System.IO;
+using AnyDiff;
 using zInvoiceTransformer.Comms;
 using ZinvoiceTransformer.XmlHelpers;
 using ZinvoiceTransformer.XmlModels;
@@ -12,35 +13,45 @@ namespace zInvoiceTransformer
     public partial class TemplateEditor : Form
     {
         //static InvoiceImportTemplates _invoiceImportTemplates;
-        InvoiceImportTemplatesTemplate _selectedTemplateForDisplay;
+        InvoiceImportTemplatesTemplate _selectedTemplateClone;
         InvoiceImportTemplatesTemplate _originalTemplate;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
-        bool _isInitialLoad;
+        //bool _isInitialLoad;
 
         public TemplateEditor(InvoiceTemplateModel invoiceTemplateModel)
         {
             InitializeComponent();
             _invoiceTemplateModel = invoiceTemplateModel;
-            _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
-            LoadTemplates();
+            InitializeTemplateModels(_invoiceTemplateModel.SelectedTemplate.Id);
             InitialiseBindings();
+            _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
+            //_isInitialLoad = true;
+            PopulateTemplateListBox();
+            
 
-            _isInitialLoad = false;
+            //_isInitialLoad = false;
+        }
+
+        private void InitializeTemplateModels(int templateId)
+        {
+            _originalTemplate = _invoiceTemplateModel.GetTemplate(templateId);
+            CreateRemoteInvoiceSettingsElementIfRequired();
+            _selectedTemplateClone = AnyClone.Cloner.Clone(_originalTemplate);
         }
 
         void InitialiseBindings()
         {
-            _nameTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateForDisplay, "Name", false, DataSourceUpdateMode.Never));
-            _descriptionTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateForDisplay, "Description", false, DataSourceUpdateMode.Never));
-            _activeCheckBox.DataBindings.Add(new Binding("Checked", _selectedTemplateForDisplay, "Active", false,
+            _nameTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Name", false, DataSourceUpdateMode.Never));
+            _descriptionTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Description", false, DataSourceUpdateMode.Never));
+            _activeCheckBox.DataBindings.Add(new Binding("Checked", _selectedTemplateClone, "Active", false,
                 DataSourceUpdateMode.Never));
-            _sourceFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateForDisplay, "SourceFolder", false, DataSourceUpdateMode.Never));
-            _outputFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateForDisplay, "OutputFolder", false, DataSourceUpdateMode.Never));
-            _fieldDelimiterTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateForDisplay, "Delimiter", false, DataSourceUpdateMode.Never));
+            _sourceFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "SourceFolder", false, DataSourceUpdateMode.Never));
+            _outputFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "OutputFolder", false, DataSourceUpdateMode.Never));
+            _fieldDelimiterTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Delimiter", false, DataSourceUpdateMode.Never));
 
         }
 
-        private void LoadTemplates(string selectedTemplateId = null)
+        private void PopulateTemplateListBox(string selectedTemplateId = null)
         {
             //_invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
 
@@ -49,18 +60,17 @@ namespace zInvoiceTransformer
             _templatesListBox.Items.AddRange(allTemplateListItems);
 
             _templatesListBox.SelectedItem =
-                allTemplateListItems.FirstOrDefault(i => i.Id == _invoiceTemplateModel.SelectedTemplate.Id.ToString());
+                allTemplateListItems.FirstOrDefault(i => i.Id == _selectedTemplateClone.Id.ToString());
         }
 
         void _templatesListBoxSelectionChanged(object sender, System.EventArgs e)
         {
-            if(!_isInitialLoad)
-                SaveSelectedTemplateEdits();
+            SaveUiChangesToSelectedTemplate();
             
-            if (!_isInitialLoad && SelectedTemplateHasEdits())
+            if (SelectedTemplateCloneHasEdits())
             {
                 var result = MessageBox.Show(this,
-                    $"The selected template '{_selectedTemplateForDisplay.Name}' has changed.\nSave changes?",
+                    $"The selected template '{_selectedTemplateClone.Name}' has changed.\nSave changes?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
@@ -68,23 +78,23 @@ namespace zInvoiceTransformer
                 switch (result)
                 {
                     case DialogResult.Yes:
-                        _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
-                        SaveTemplates();
+                        SaveTemplatesToFile();
+                        InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
                         break;
                     case DialogResult.No:
-                        _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
+                        InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
                         break;
                     case DialogResult.Cancel:
                     default:
                         _templatesListBox.SelectedIndexChanged -= _templatesListBoxSelectionChanged;
-                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id == _selectedTemplateForDisplay.Id.ToString());
+                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id == _selectedTemplateClone.Id.ToString());
                         _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
                         return;
                 }
             }
             else
             {
-                _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
+                InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
             }
 
             LoadTemplate();
@@ -98,30 +108,24 @@ namespace zInvoiceTransformer
 
             if (_templatesListBox.SelectedItem != null)
             {
-                var item = (TemplateListItem)_templatesListBox.SelectedItem;
-
-                _originalTemplate = _invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id);
-                CreateRemoteInvoiceSettingsElementIfRequired();
-                _selectedTemplateForDisplay =  _originalTemplate.DeepClone(); 
-
-                //_nameTextBox.Text = _selectedTemplateForDisplay.Name;
-                //_descriptionTextBox.Text = _selectedTemplateForDisplay.Description;
-                //_activeCheckBox.Checked = _selectedTemplateForDisplay.Active;
-                //_sourceFolderTextBox.Text = _selectedTemplateForDisplay.SourceFolder;
-                //_outputFolderTextBox.Text = _selectedTemplateForDisplay.OutputFolder;
-                //_fieldDelimiterTextBox.Text = _selectedTemplateForDisplay.Delimiter;
-                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateForDisplay.LbProcessingType.ToString());
-                _hasHeaderCheckBox.Checked = _selectedTemplateForDisplay.HasHeaderRecord;
-                _hasMasterCheckBox.Checked = _selectedTemplateForDisplay.HasMasterRecord;
-                _hasFooterCheckBox.Checked = _selectedTemplateForDisplay.HasSummaryRecord;
-                _uomCaseSymbolTextBox.Text = _selectedTemplateForDisplay.UoMCase;
-                _uomEachSymbolTextBox.Text = _selectedTemplateForDisplay.UoMEach;
-                _uomWeightSymbolTextBox.Text = _selectedTemplateForDisplay.UoMWeight;
+                //_nameTextBox.Text = _selectedTemplateClone.Name;
+                //_descriptionTextBox.Text = _selectedTemplateClone.Description;
+                //_activeCheckBox.Checked = _selectedTemplateClone.Active;
+                //_sourceFolderTextBox.Text = _selectedTemplateClone.SourceFolder;
+                //_outputFolderTextBox.Text = _selectedTemplateClone.OutputFolder;
+                //_fieldDelimiterTextBox.Text = _selectedTemplateClone.Delimiter;
+                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateClone.LbProcessingType.ToString());
+                _hasHeaderCheckBox.Checked = _selectedTemplateClone.HasHeaderRecord;
+                _hasMasterCheckBox.Checked = _selectedTemplateClone.HasMasterRecord;
+                _hasFooterCheckBox.Checked = _selectedTemplateClone.HasSummaryRecord;
+                _uomCaseSymbolTextBox.Text = _selectedTemplateClone.UoMCase;
+                _uomEachSymbolTextBox.Text = _selectedTemplateClone.UoMEach;
+                _uomWeightSymbolTextBox.Text = _selectedTemplateClone.UoMWeight;
 
                 if (_hasMasterCheckBox.Checked)
                 {
-                    _masterRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.MasterRow.RecordTypeIdentifier;
-                    _masterRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.MasterRow.RecordTypePostion;
+                    _masterRecordIdentifierTextBox.Text = _selectedTemplateClone.MasterRow.RecordTypeIdentifier;
+                    _masterRecordPositionNumericUpDown.Value = _selectedTemplateClone.MasterRow.RecordTypePostion;
                 }
                 else
                 {
@@ -129,13 +133,13 @@ namespace zInvoiceTransformer
                     _masterRecordPositionNumericUpDown.Value = -1;
                 }
 
-                _detailRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.DetailFields.RecordTypeIdentifier;
-                _detailRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.DetailFields.RecordTypePostion;
+                _detailRecordIdentifierTextBox.Text = _selectedTemplateClone.DetailFields.RecordTypeIdentifier;
+                _detailRecordPositionNumericUpDown.Value = _selectedTemplateClone.DetailFields.RecordTypePostion;
 
                 if (_hasFooterCheckBox.Checked)
                 {
-                    _footerRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.SummaryRow.RecordTypeIdentifier;
-                    _footerRecordPositionNumericUpDown.Value = _selectedTemplateForDisplay.SummaryRow.RecordTypePostion;
+                    _footerRecordIdentifierTextBox.Text = _selectedTemplateClone.SummaryRow.RecordTypeIdentifier;
+                    _footerRecordPositionNumericUpDown.Value = _selectedTemplateClone.SummaryRow.RecordTypePostion;
                 }
                 else
                 {
@@ -152,7 +156,7 @@ namespace zInvoiceTransformer
                 //var noOfDetailFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.DetailFields);
                 //var noOfFooterFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.SummaryRow);
 
-                var eachesConversionElement = _selectedTemplateForDisplay.EachesConversion;
+                var eachesConversionElement = _selectedTemplateClone.EachesConversion;
                 _useEachesConversionCheckbox.Checked = eachesConversionElement != null && eachesConversionElement.enabled == 1;
                 _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.tag : string.Empty;
                 _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
@@ -164,15 +168,15 @@ namespace zInvoiceTransformer
                 _protocolTypeComboBox.DataSource = transferProtocols;
                 _protocolTypeComboBox.DisplayMember = "name";
                 _protocolTypeComboBox.ValueMember = "id";
-                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateForDisplay.RemoteInvoiceSettings?.RemoteTransferProtocolTypeId);
+                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateClone.RemoteInvoiceSettings?.RemoteTransferProtocolTypeId);
 
-                _urlTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.url;
-                _portTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.port.ToString();
-                _usernameTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.username;
-                _passwordTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.password;
-                _keyfileLocationTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.keyfileLocation;
-                _invoiceFilePrefixTextBox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.InvoiceFileCustomerPrefix;
-                _remoteFolderTextbox.Text = _selectedTemplateForDisplay.RemoteInvoiceSettings?.RemoteFolder;
+                _urlTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.url;
+                _portTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.port.ToString();
+                _usernameTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.username;
+                _passwordTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.password;
+                _keyfileLocationTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.keyfileLocation;
+                _invoiceFilePrefixTextBox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.InvoiceFileCustomerPrefix;
+                _remoteFolderTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.RemoteFolder;
             }
 
             _templateFieldDefinitionsFlowLayoutPanel.ResumeLayout();
@@ -233,8 +237,8 @@ namespace zInvoiceTransformer
             switch (fieldRecordLocation)
             {
                 case FieldRecordLocation.MasterRow:
-                    if (_selectedTemplateForDisplay.MasterRow.Field != null)
-                        foreach (var fieldElement in _selectedTemplateForDisplay.MasterRow.Field)
+                    if (_selectedTemplateClone.MasterRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.MasterRow.Field)
                         {
                             var field = fieldElement;
                             var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
@@ -251,8 +255,8 @@ namespace zInvoiceTransformer
                     break;
                 
                 case FieldRecordLocation.DetailFields:
-                    if (_selectedTemplateForDisplay.DetailFields.Field != null)
-                        foreach (var fieldElement in _selectedTemplateForDisplay.DetailFields.Field)
+                    if (_selectedTemplateClone.DetailFields.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.DetailFields.Field)
                         {
                             var field = fieldElement;
                             var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
@@ -269,8 +273,8 @@ namespace zInvoiceTransformer
                     break;
 
                 case FieldRecordLocation.SummaryRow:
-                    if (_selectedTemplateForDisplay.SummaryRow.Field != null)
-                        foreach (var fieldElement in _selectedTemplateForDisplay.SummaryRow.Field)
+                    if (_selectedTemplateClone.SummaryRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.SummaryRow.Field)
                         {
                             var field = fieldElement;
                             var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
@@ -292,19 +296,20 @@ namespace zInvoiceTransformer
             return templateFieldDefinitions.ToArray();
         }
         
-        private void SaveTemplates()
+        private void SaveTemplatesToFile()
         {
-            _originalTemplate = _selectedTemplateForDisplay.DeepClone();
+            var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
+                .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateClone.Id));
+
+            _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
 
             _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
-            _isInitialLoad = true;
-            LoadTemplates();
-            _isInitialLoad = false;
+            PopulateTemplateListBox();
         }
 
         private void _closeButton_Click(object sender, System.EventArgs e)
         {
-            SaveSelectedTemplateEdits();
+            SaveUiChangesToSelectedTemplate();
             Close();
         }
 
@@ -317,9 +322,9 @@ namespace zInvoiceTransformer
                 if(MessageBox.Show(this, $"Delete selected template '{item.Name}'", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     _invoiceTemplateModel.ImportTemplates.Templates.ToList().RemoveAll(t => t.Id.ToString() == item.Id);
-                    //_invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id.ToString() == item.Id).Remove();
-                    SaveTemplates();
-                    LoadTemplates();
+                    SaveTemplatesToFile();
+                    InitializeTemplateModels(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault().Id);
+                    PopulateTemplateListBox();
                 }
             }
             else
@@ -351,65 +356,65 @@ namespace zInvoiceTransformer
 
         private void _saveButton_Click(object sender, System.EventArgs e)
         {
-            if (_selectedTemplateForDisplay == null)
+            if (_selectedTemplateClone == null)
                 return;
 
-            SaveSelectedTemplateEdits();
-            if (SelectedTemplateHasEdits())
+            SaveUiChangesToSelectedTemplate();
+            if (SelectedTemplateCloneHasEdits())
             {
-                SaveTemplates();
+                SaveTemplatesToFile();
             }
         }
 
-        private void SaveSelectedTemplateEdits()
+        private void SaveUiChangesToSelectedTemplate()
         {
-            if (_selectedTemplateForDisplay == null)
+            if (_selectedTemplateClone == null)
                 return;
 
-            _selectedTemplateForDisplay.Name = _nameTextBox.Text;
-            _selectedTemplateForDisplay.Description = _descriptionTextBox.Text;
-            _selectedTemplateForDisplay.Active = _activeCheckBox.Checked;
-            _selectedTemplateForDisplay.SourceFolder = _sourceFolderTextBox.Text;
-            _selectedTemplateForDisplay.OutputFolder = _outputFolderTextBox.Text;
-            _selectedTemplateForDisplay.Delimiter = _fieldDelimiterTextBox.Text;
-            _selectedTemplateForDisplay.LbProcessingType = Convert.ToByte(GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex));
-            _selectedTemplateForDisplay.HasHeaderRecord = _hasHeaderCheckBox.Checked;
+            _selectedTemplateClone.Name = _nameTextBox.Text;
+            _selectedTemplateClone.Description = _descriptionTextBox.Text;
+            _selectedTemplateClone.Active = _activeCheckBox.Checked;
+            _selectedTemplateClone.SourceFolder = _sourceFolderTextBox.Text;
+            _selectedTemplateClone.OutputFolder = _outputFolderTextBox.Text;
+            _selectedTemplateClone.Delimiter = _fieldDelimiterTextBox.Text;
+            _selectedTemplateClone.LbProcessingType = Convert.ToByte(GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex));
+            _selectedTemplateClone.HasHeaderRecord = _hasHeaderCheckBox.Checked;
 
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = Convert.ToByte(_protocolTypeComboBox.SelectedValue);
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.url = _urlTextbox.Text;
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.port = Convert.ToInt32(_portTextbox.Text);
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.username = _usernameTextbox.Text;
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.password = _passwordTextbox.Text;
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.keyfileLocation = _keyfileLocationTextbox.Text;
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.InvoiceFileCustomerPrefix = _invoiceFilePrefixTextBox.Text;
-            _selectedTemplateForDisplay.RemoteInvoiceSettings.RemoteFolder = _remoteFolderTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = Convert.ToByte(_protocolTypeComboBox.SelectedValue);
+            _selectedTemplateClone.RemoteInvoiceSettings.url = _urlTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.port = Convert.ToInt32(string.IsNullOrEmpty(_portTextbox.Text) ? "0" : _portTextbox.Text) ;
+            _selectedTemplateClone.RemoteInvoiceSettings.username = _usernameTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.password = _passwordTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.keyfileLocation = _keyfileLocationTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.InvoiceFileCustomerPrefix = _invoiceFilePrefixTextBox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder = _remoteFolderTextbox.Text;
 
-            _selectedTemplateForDisplay.HasMasterRecord =_hasMasterCheckBox.Checked;
-            _selectedTemplateForDisplay.MasterRow.RecordTypePostion = (sbyte)_masterRecordPositionNumericUpDown.Value;
-            _selectedTemplateForDisplay.MasterRow.RecordTypeIdentifier = _masterRecordIdentifierTextBox.Text;
+            _selectedTemplateClone.HasMasterRecord =_hasMasterCheckBox.Checked;
+            _selectedTemplateClone.MasterRow.RecordTypePostion = (sbyte)_masterRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.MasterRow.RecordTypeIdentifier = _masterRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.HasSummaryRecord = _hasFooterCheckBox.Checked;
-            _selectedTemplateForDisplay.SummaryRow.RecordTypePostion = (sbyte)_footerRecordPositionNumericUpDown.Value;
-            _selectedTemplateForDisplay.SummaryRow.RecordTypeIdentifier = _footerRecordIdentifierTextBox.Text;
+            _selectedTemplateClone.HasSummaryRecord = _hasFooterCheckBox.Checked;
+            _selectedTemplateClone.SummaryRow.RecordTypePostion = (sbyte)_footerRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.SummaryRow.RecordTypeIdentifier = _footerRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.DetailFields.RecordTypePostion = (sbyte)_detailRecordPositionNumericUpDown.Value;
-            _selectedTemplateForDisplay.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
+            _selectedTemplateClone.DetailFields.RecordTypePostion = (sbyte)_detailRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
 
             //????
-            _selectedTemplateForDisplay.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
-            _selectedTemplateForDisplay.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
-            _selectedTemplateForDisplay.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
+            _selectedTemplateClone.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
+            _selectedTemplateClone.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
+            _selectedTemplateClone.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
 
-            if (_selectedTemplateForDisplay.EachesConversion == null)
+            if (_selectedTemplateClone.EachesConversion == null)
             {
-                _selectedTemplateForDisplay.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
+                _selectedTemplateClone.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
                 {
                     enabled = 0,
                     tag = "*"
                 };
             }
-            _selectedTemplateForDisplay.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
-            _selectedTemplateForDisplay.EachesConversion.tag = _eachesConversionTagTextBox.Text;
+            _selectedTemplateClone.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
+            _selectedTemplateClone.EachesConversion.tag = _eachesConversionTagTextBox.Text;
 
             var fieldDefs = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
             foreach (var field in fieldDefs)
@@ -417,7 +422,7 @@ namespace zInvoiceTransformer
                 switch (field.FieldLocation)
                 {
                     case FieldRecordLocation.MasterRow:
-                        _selectedTemplateForDisplay.MasterRow.Field?.ToList().Add(
+                        _selectedTemplateClone.MasterRow.Field?.ToList().Add(
                             new InvoiceImportTemplatesTemplateMasterRowField
                             {
                                 FieldNameId = (byte) field.FieldNameId,
@@ -430,7 +435,7 @@ namespace zInvoiceTransformer
                         break;
                     
                     case FieldRecordLocation.DetailFields:
-                        _selectedTemplateForDisplay.DetailFields.Field?.ToList().
+                        _selectedTemplateClone.DetailFields.Field?.ToList().
                             Add(new InvoiceImportTemplatesTemplateDetailFieldsField
                             {
                                 FieldNameId = (byte)field.FieldNameId,
@@ -444,7 +449,7 @@ namespace zInvoiceTransformer
                         break;
                     
                     case FieldRecordLocation.SummaryRow:
-                        _selectedTemplateForDisplay.SummaryRow.Field?.ToList().
+                        _selectedTemplateClone.SummaryRow.Field?.ToList().
                             Add(new InvoiceImportTemplatesTemplateSummaryRowField()
                             {
                                 FieldNameId = (byte)field.FieldNameId,
@@ -460,25 +465,19 @@ namespace zInvoiceTransformer
                 }
             }
 
-            var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
-                .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateForDisplay.Id));
+            // TODO: don't need this here. this method just saves the ui edit to the working template
+            //var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
+            //    .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateClone.Id));
 
-            _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateForDisplay;
+            //_invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
         }
 
-        private bool SelectedTemplateHasEdits()
+        private bool SelectedTemplateCloneHasEdits()
         {
-            //_originalTemplate = _invoiceImportTemplates.Templates.FirstOrDefault(x => x.Id == _selectedTemplateForDisplay.Id);
-
-            //if (!XNode.DeepEquals(_originalTemplate, _selectedTemplateForDisplay))
-            //{
-            //    return true;
-            //}
-
-            if(_selectedTemplateForDisplay == null )
+            if(_selectedTemplateClone == null )
                 return false;
 
-            return true;
+            return AnyDiff.AnyDiff.Diff(_originalTemplate, _selectedTemplateClone).Count > 0;
         }
 
         private void _sourceFolderButton_Click(object sender, System.EventArgs e)
@@ -536,16 +535,17 @@ namespace zInvoiceTransformer
             }
             _invoiceTemplateModel.ImportTemplates.Templates.ToList().Add(newTemplate);
             //_invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
-            SaveTemplates();
-            LoadTemplates();
+            SaveTemplatesToFile();
+            InitializeTemplateModels(newTemplate.Id);
+            PopulateTemplateListBox();
         }
 
         private void TemplateEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (SelectedTemplateHasEdits())
+            if (SelectedTemplateCloneHasEdits())
             {
                 var result = MessageBox.Show(this,
-                    $"The selected template '{_selectedTemplateForDisplay.Name}' has changed.\nSave changes before closing?",
+                    $"The selected template '{_selectedTemplateClone.Name}' has changed.\nSave changes before closing?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
@@ -553,7 +553,7 @@ namespace zInvoiceTransformer
                 switch (result)
                 {
                     case DialogResult.Yes:
-                        SaveTemplates();
+                        SaveTemplatesToFile();
                         break;
                     case DialogResult.No:
                         break;
