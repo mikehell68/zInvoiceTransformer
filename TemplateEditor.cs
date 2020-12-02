@@ -23,6 +23,8 @@ namespace zInvoiceTransformer
             InitialiseBindings();
             _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
             PopulateTemplateListBox();
+            PopulateUiWithSelectedTemplateClone();
+            SetSelectedTemplate(_invoiceTemplateModel.SelectedTemplate.Id);
         }
 
         private void InitializeTemplateModels(int templateId)
@@ -49,9 +51,12 @@ namespace zInvoiceTransformer
             var allTemplateListItems = _invoiceTemplateModel.ImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
+        }
 
-            _templatesListBox.SelectedItem =
-                allTemplateListItems.FirstOrDefault(i => i.Id == _selectedTemplateClone.Id.ToString());
+        void SetSelectedTemplate(int templateId)
+        {
+            _templatesListBox.SelectedItem = _templatesListBox.Items.OfType<TemplateListItem>()
+                .FirstOrDefault(ti => ti.Id == templateId.ToString());
         }
 
         void _templatesListBoxSelectionChanged(object sender, System.EventArgs e)
@@ -78,33 +83,35 @@ namespace zInvoiceTransformer
                     case DialogResult.Cancel:
                     default:
                         _templatesListBox.SelectedIndexChanged -= _templatesListBoxSelectionChanged;
-                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id == _selectedTemplateClone.Id.ToString());
+                        SetSelectedTemplate(_selectedTemplateClone.Id);
                         _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
                         return;
                 }
+                PopulateTemplateListBox();
+                PopulateUiWithSelectedTemplateClone();
+                SetSelectedTemplate(_selectedTemplateClone.Id);
             }
             else
             {
                 InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
+                PopulateUiWithSelectedTemplateClone();
             }
-
-            LoadTemplate();
         }
 
-        private void LoadTemplate()
+        private void PopulateUiWithSelectedTemplateClone()
         {
             _templateFieldDefinitionsFlowLayoutPanel.SuspendLayout();
 
             _templateFieldDefinitionsFlowLayoutPanel.Controls.Clear();
 
-            if (_templatesListBox.SelectedItem != null)
+            if (_selectedTemplateClone != null)
             {
-                //_nameTextBox.Text = _selectedTemplateClone.Name;
-                //_descriptionTextBox.Text = _selectedTemplateClone.Description;
-                //_activeCheckBox.Checked = _selectedTemplateClone.Active;
-                //_sourceFolderTextBox.Text = _selectedTemplateClone.SourceFolder;
-                //_outputFolderTextBox.Text = _selectedTemplateClone.OutputFolder;
-                //_fieldDelimiterTextBox.Text = _selectedTemplateClone.Delimiter;
+                _nameTextBox.Text = _selectedTemplateClone.Name;
+                _descriptionTextBox.Text = _selectedTemplateClone.Description;
+                _activeCheckBox.Checked = _selectedTemplateClone.Active;
+                _sourceFolderTextBox.Text = _selectedTemplateClone.SourceFolder;
+                _outputFolderTextBox.Text = _selectedTemplateClone.OutputFolder;
+                _fieldDelimiterTextBox.Text = _selectedTemplateClone.Delimiter;
                 _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateClone.LbProcessingType.ToString());
                 _hasHeaderCheckBox.Checked = _selectedTemplateClone.HasHeaderRecord;
                 _hasMasterCheckBox.Checked = _selectedTemplateClone.HasMasterRecord;
@@ -295,7 +302,6 @@ namespace zInvoiceTransformer
             _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
 
             _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
-            PopulateTemplateListBox();
         }
 
         private void _closeButton_Click(object sender, System.EventArgs e)
@@ -352,6 +358,7 @@ namespace zInvoiceTransformer
             if (SelectedTemplateCloneHasEdits())
             {
                 SaveTemplatesToFile();
+                InitializeTemplateModels(_selectedTemplateClone.Id);
             }
         }
 
@@ -389,11 +396,6 @@ namespace zInvoiceTransformer
             _selectedTemplateClone.DetailFields.RecordTypePostion = (sbyte)_detailRecordPositionNumericUpDown.Value;
             _selectedTemplateClone.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
 
-            //????
-            _selectedTemplateClone.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
-            _selectedTemplateClone.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
-            _selectedTemplateClone.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
-
             if (_selectedTemplateClone.EachesConversion == null)
             {
                 _selectedTemplateClone.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
@@ -405,54 +407,67 @@ namespace zInvoiceTransformer
             _selectedTemplateClone.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
             _selectedTemplateClone.EachesConversion.tag = _eachesConversionTagTextBox.Text;
 
-            var fieldDefs = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
-            foreach (var field in fieldDefs)
+            var masterFieldList = new List<InvoiceImportTemplatesTemplateMasterRowField>();
+            var detailFieldList = new List<InvoiceImportTemplatesTemplateDetailFieldsField>();
+            var summaryFieldList = new List<InvoiceImportTemplatesTemplateSummaryRowField>();
+
+            var fieldDefinitions = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
+            foreach (var field in fieldDefinitions)
             {
                 switch (field.FieldLocation)
                 {
                     case FieldRecordLocation.MasterRow:
-                        _selectedTemplateClone.MasterRow.Field?.ToList().
-                            Add(new InvoiceImportTemplatesTemplateMasterRowField
-                            {
-                                FieldNameId = (byte) field.FieldNameId,
-                                DirectiveId = (byte) (field.DirectiveId ?? new byte()),
-                                Delimited = new InvoiceImportTemplatesTemplateMasterRowFieldDelimited
-                                {
-                                    Position = (byte) field.FieldPosition
-                                }
-                            });
+                        var masterField = _selectedTemplateClone.MasterRow.Field?.ToList()
+                                      .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ?? 
+                                      new InvoiceImportTemplatesTemplateMasterRowField
+                                      {
+                                          Delimited = new InvoiceImportTemplatesTemplateMasterRowFieldDelimited()
+                                      };
+
+                        masterField.FieldNameId = (byte)field.FieldNameId;
+                        masterField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        masterField.Delimited.Position = (byte)field.FieldPosition;
+
+                        masterFieldList.Add(masterField);
+                        
+           
                         break;
                     
                     case FieldRecordLocation.DetailFields:
-                        _selectedTemplateClone.DetailFields.Field?.ToList().
-                            Add(new InvoiceImportTemplatesTemplateDetailFieldsField
-                            {
-                                FieldNameId = (byte)field.FieldNameId,
-                                DirectiveId = (byte) (field.DirectiveId ?? new byte()),
-                                Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited
-                                {
-                                    Position = (byte) field.FieldPosition
-                                }
-
-                            });
+                        
+                        var detailField = _selectedTemplateClone.DetailFields.Field?.ToList()
+                                      .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ??
+                                  new InvoiceImportTemplatesTemplateDetailFieldsField
+                                  {
+                                      Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited()
+                                  };
+                        detailField.FieldNameId = (byte)field.FieldNameId;
+                        detailField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        detailField.Delimited.Position = (byte)field.FieldPosition;
+                        detailFieldList.Add(detailField);
                         break;
                     
                     case FieldRecordLocation.SummaryRow:
-                        _selectedTemplateClone.SummaryRow.Field?.ToList().
-                            Add(new InvoiceImportTemplatesTemplateSummaryRowField()
-                            {
-                                FieldNameId = (byte)field.FieldNameId,
-                                DirectiveId = (byte)(field.DirectiveId ?? new byte()),
-                                Delimited = new InvoiceImportTemplatesTemplateSummaryRowFieldDelimited()
-                                {
-                                    Position = (byte)field.FieldPosition
-                                }
-                            });
+                        
+                        var summaryField = _selectedTemplateClone.SummaryRow.Field?.ToList()
+                                       .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ??
+                                   new InvoiceImportTemplatesTemplateSummaryRowField
+                                   {
+                                       Delimited = new InvoiceImportTemplatesTemplateSummaryRowFieldDelimited()
+                                   };
+                        summaryField.FieldNameId = (byte)field.FieldNameId;
+                        summaryField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        summaryField.Delimited.Position = (byte)field.FieldPosition;
+                        
+                        summaryFieldList.Add(summaryField);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
+            _selectedTemplateClone.MasterRow.Field = masterFieldList.Any() ? masterFieldList.ToArray() : null;
+            _selectedTemplateClone.DetailFields.Field = detailFieldList.Any() ? detailFieldList.ToArray() : null;
+            _selectedTemplateClone.SummaryRow.Field = summaryFieldList.Any() ? summaryFieldList.ToArray() : null;
         }
 
         private bool SelectedTemplateCloneHasEdits()
