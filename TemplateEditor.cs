@@ -50,16 +50,11 @@ namespace zInvoiceTransformer
 
         }
 
-        private void PopulateTemplateListBox(string selectedTemplateId = null)
+        private void PopulateTemplateListBox()
         {
-            //_invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
-
             var allTemplateListItems = _invoiceTemplateModel.ImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
-
-            //_templatesListBox.SelectedItem =
-            //    allTemplateListItems.FirstOrDefault(i => i.Id == _selectedTemplateClone.Id.ToString());
         }
 
         void SetSelectedTemplate(int templateId)

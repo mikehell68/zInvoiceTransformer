@@ -119,42 +119,7 @@ namespace zInvoiceTransformer
                     Name = template.Name,
                     IsInUse = template.Active
                 }).ToArray();
-
-            //if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
-            //{
-            //    return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Select(
-            //        template => new TemplateListItem
-            //                        {
-            //                            Id = template.Attribute("Id").Value,
-            //                            Name = template.Attribute("Name").Value,
-            //                            IsInUse = template.Attribute("Active").Value == "1"
-            //                        }).ToArray();
-            //}
-
-            //return new TemplateListItem[0];
         }
-
-        //public IEnumerable<XElement> GetAllTemplates()
-        //{
-        //    if (_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Count() > 0)
-        //    {
-        //        return _invoiceImportTemplates.Root.Element("Templates").Descendants("Template");
-        //    }
-
-        //    return null;
-        //}
-
-        //public IEnumerable<XElement> GetAllActiveTemplates()
-        //{
-        //    var allActiveTemplates = GetAllTemplates();
-            
-        //    if (allActiveTemplates != null)
-        //    {
-        //        return GetAllTemplates().Where(t => t.Attribute("Active").Value == "1");
-        //    }
-
-        //    return new List<XElement>();
-        //}
 
         public InvoiceImportTemplatesTemplate GetTemplate(int templateId)
         {
