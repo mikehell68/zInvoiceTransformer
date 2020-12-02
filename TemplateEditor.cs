@@ -3,7 +3,6 @@ using System.Linq;
 using System.Windows.Forms;
 using System;
 using System.IO;
-using AnyDiff;
 using zInvoiceTransformer.Comms;
 using ZinvoiceTransformer.XmlHelpers;
 using ZinvoiceTransformer.XmlModels;
@@ -12,12 +11,10 @@ namespace zInvoiceTransformer
 {
     public partial class TemplateEditor : Form
     {
-        //static InvoiceImportTemplates _invoiceImportTemplates;
         InvoiceImportTemplatesTemplate _selectedTemplateClone;
         InvoiceImportTemplatesTemplate _originalTemplate;
         readonly InvoiceTemplateModel _invoiceTemplateModel;
-        //bool _isInitialLoad;
-
+        
         public TemplateEditor(InvoiceTemplateModel invoiceTemplateModel)
         {
             InitializeComponent();
@@ -25,11 +22,7 @@ namespace zInvoiceTransformer
             InitializeTemplateModels(_invoiceTemplateModel.SelectedTemplate.Id);
             InitialiseBindings();
             _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
-            //_isInitialLoad = true;
             PopulateTemplateListBox();
-            
-
-            //_isInitialLoad = false;
         }
 
         private void InitializeTemplateModels(int templateId)
@@ -51,10 +44,8 @@ namespace zInvoiceTransformer
 
         }
 
-        private void PopulateTemplateListBox(string selectedTemplateId = null)
+        private void PopulateTemplateListBox()
         {
-            //_invoiceImportTemplates = _invoiceTemplateModel.ImportTemplates;
-
             var allTemplateListItems = _invoiceTemplateModel.ImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
@@ -345,8 +336,6 @@ namespace zInvoiceTransformer
 
         private void _testRemoteTransferProtocolButton_Click(object sender, System.EventArgs e)
         {
-            // TODO: Hook up server connection
-            //_invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
             var rc = RemoteConnectionFactory.Build((int)_protocolTypeComboBox.SelectedValue);
             rc.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
             var connected = rc.CheckConnection();
@@ -422,8 +411,8 @@ namespace zInvoiceTransformer
                 switch (field.FieldLocation)
                 {
                     case FieldRecordLocation.MasterRow:
-                        _selectedTemplateClone.MasterRow.Field?.ToList().Add(
-                            new InvoiceImportTemplatesTemplateMasterRowField
+                        _selectedTemplateClone.MasterRow.Field?.ToList().
+                            Add(new InvoiceImportTemplatesTemplateMasterRowField
                             {
                                 FieldNameId = (byte) field.FieldNameId,
                                 DirectiveId = (byte) (field.DirectiveId ?? new byte()),
@@ -464,12 +453,6 @@ namespace zInvoiceTransformer
                         throw new ArgumentOutOfRangeException();
                 }
             }
-
-            // TODO: don't need this here. this method just saves the ui edit to the working template
-            //var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
-            //    .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateClone.Id));
-
-            //_invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
         }
 
         private bool SelectedTemplateCloneHasEdits()
@@ -523,7 +506,6 @@ namespace zInvoiceTransformer
             newTemplate.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
             newTemplate.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
 
-            //XElement el = XElement.Parse(_fieldTemplate);
             var el = new InvoiceImportTemplatesTemplateDetailFieldsField();
             var fieldDefs = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
             foreach (var field in fieldDefs)
@@ -534,7 +516,6 @@ namespace zInvoiceTransformer
                 newTemplate.DetailFields.Field.ToList().Add(el);
             }
             _invoiceTemplateModel.ImportTemplates.Templates.ToList().Add(newTemplate);
-            //_invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
             SaveTemplatesToFile();
             InitializeTemplateModels(newTemplate.Id);
             PopulateTemplateListBox();
@@ -567,12 +548,6 @@ namespace zInvoiceTransformer
         private void _useEachesConversionCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
-        }
-
-        private void _templatesListBox_Click(object sender, EventArgs e)
-        {
-            //if(SelectedTemplateId == ((TemplateListItem)_templatesListBox.SelectedItem).Id)
-
         }
     }
 }
