@@ -74,26 +74,7 @@ namespace zInvoiceTransformer
             if (_templateSelectorListBox.SelectedItem != null)
             {
                 _invoiceTemplateModel.SetSelectedTemplate(Convert.ToByte(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id));
-                _invoiceFilesListBox.Items.Clear();
-
-                var fileList = _invoiceTemplateModel.GetSelectedTemplateImportFiles();
-
-                if (fileList != null)
-                    _invoiceFilesListBox.Items.AddRange(fileList);
-                else
-                {
-                    if( MessageBox.Show(
-                            this, 
-                            "Could not find invoice source folder: " + '\n' +
-                            _invoiceTemplateModel.SelectedTemplate.SourceFolder + 
-                            '\n' + "Do you want to create the folder now?",
-                            Resources.AppNameText, 
-                            MessageBoxButtons.YesNoCancel, 
-                            MessageBoxIcon.Warning)  == DialogResult.Yes )
-                    {
-                        Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.SourceFolder);
-                    }
-                }
+                RefreshFileList();
             }
         }
 
@@ -221,7 +202,8 @@ namespace zInvoiceTransformer
                                     Resources.AppNameText, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            LoadAndDisplayTemplates();
+            //LoadAndDisplayTemplates();
+            RefreshFileList();
         }
 
         private void OnDoTransformAndImportClick(object sender, EventArgs e)
@@ -286,6 +268,31 @@ namespace zInvoiceTransformer
             {
                 var fileDownloadDialog = new RemoteDownloadDialog(_invoiceTemplateModel, _clientTransferProtocol);
                 fileDownloadDialog.ShowDialog(this);
+                RefreshFileList();
+            }
+        }
+
+        private void RefreshFileList()
+        {
+            _invoiceFilesListBox.Items.Clear();
+
+            var fileList = _invoiceTemplateModel.GetSelectedTemplateImportFiles();
+
+            if (fileList != null)
+                _invoiceFilesListBox.Items.AddRange(fileList);
+            else
+            {
+                if (MessageBox.Show(
+                        this,
+                        "Could not find invoice source folder: " + '\n' +
+                        _invoiceTemplateModel.SelectedTemplate.SourceFolder +
+                        '\n' + "Do you want to create the folder now?",
+                        Resources.AppNameText,
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Warning) == DialogResult.Yes)
+                {
+                    Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.SourceFolder);
+                }
             }
         }
 
@@ -326,11 +333,11 @@ namespace zInvoiceTransformer
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            InitialiseClientConnectionDetails();
-            if (_clientTransferProtocol.CheckConnection())
-            {
-                _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
-            }
+            //InitialiseClientConnectionDetails();
+            //if (_clientTransferProtocol.CheckConnection())
+            //{
+            //    _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+            //}
         }
     }
 }

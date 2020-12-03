@@ -253,7 +253,7 @@ namespace zInvoiceTransformer
         {
             if (_selectedTemplate.SummaryRow != null)
             {
-                if (_selectedTemplate.SummaryRow.Field.Count() == 0)
+                if (_selectedTemplate.SummaryRow.Field == null || _selectedTemplate.SummaryRow.Field.Count() == 0)
                     return false;
 
                 int recordTypePostion = _selectedTemplate.SummaryRow.RecordTypePostion;
@@ -357,7 +357,7 @@ namespace zInvoiceTransformer
         {
             try
             {
-                _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
+                //_invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
             }
             catch (Exception ex)
             {
@@ -488,7 +488,7 @@ namespace zInvoiceTransformer
 
         private static bool IsDetailRow(string[] splitLine)
         {
-            if (_selectedTemplate.DetailFields.Field.Count() > 0)
+            if (_selectedTemplate.DetailFields.Field != null && _selectedTemplate.DetailFields.Field.Count() > 0)
             {
                 int recordTypePostion = _selectedTemplate.DetailFields.RecordTypePostion;
                 var recordTypeIdentifier = _selectedTemplate.DetailFields.RecordTypeIdentifier;
@@ -503,7 +503,7 @@ namespace zInvoiceTransformer
 
         private static bool IsMasterRow(string[] splitLine)
         {
-            if (_selectedTemplate.MasterRow.Field.Count() > 0)
+            if (_selectedTemplate.MasterRow.Field != null && _selectedTemplate.MasterRow.Field.Count() > 0)
             {
                 if (_selectedTemplate.MasterRow == null)
                     return false;
