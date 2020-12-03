@@ -1,15 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows.Forms;
 using System.Diagnostics;
 using LogThis;
 using System.IO;
-using System.Xml.Serialization;
+using System.Linq;
 using zInvoiceTransformer.Comms;
 using ZinvoiceTransformer.Properties;
-using ZinvoiceTransformer.XmlHelpers;
-using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
@@ -25,26 +22,6 @@ namespace zInvoiceTransformer
             InitializeComponent();
             InitialiseEvents();
             _invoiceTemplateModel = new InvoiceTemplateModel();
-
-            //string xml = File.ReadAllText( InvoiceTemplateModel.InvoiceImportTemplatePath);
-            //_importTemplates = xml.ParseXml<InvoiceImportTemplates>();
-            //_importTemplates.Templates.FirstOrDefault(t => t.Id == 2).RemoteInvoiceSettings =
-            //    new InvoiceImportTemplatesTemplateRemoteInvoiceSettings
-            //    {
-            //        InvoiceFileCustomerPrefix = "", 
-            //        keyfileLocation = "", 
-            //        password = "xyz", 
-            //        port = 22,
-            //        RemoteFolder = "/inv", 
-            //        RemoteTransferProtocolTypeId = 2, 
-            //        url = "", 
-            //        username = "mike"
-            //    };
-            
-            //XmlSerializer s = new XmlSerializer(typeof(InvoiceImportTemplates));
-            //FileStream file = File.Create(InvoiceTemplateModel.InvoiceImportTemplatePath +"." +DateTime.Now.TimeOfDay.Ticks);
-            //s.Serialize(file, _importTemplates);
-            //file.Close();
         }
 
         void InitialiseEvents()
@@ -73,34 +50,29 @@ namespace zInvoiceTransformer
                 false, DataSourceUpdateMode.Never));
         }
 
-        private void LoadAndDisplayTemplates()
+        private void LoadAndDisplayTemplates(int templateId = 1)
         {
             _invoiceTemplateModel.LoadTemplates();
             _templateSelectorListBox.Items.Clear();
             _invoiceFilesListBox.Items.Clear();
             
             _templateSelectorListBox.Items.AddRange(GetListItemsForActiveTemplates());
-            _templateSelectorListBox.SetSelected(0, true);
+
+            _templateSelectorListBox.SelectedItem = _templateSelectorListBox.Items.OfType<TemplateListItem>()
+                .FirstOrDefault(ti => ti.Id == templateId.ToString());
+
+            //_templateSelectorListBox.SetSelected(0, true);
         }
 
         private static TemplateListItem[] GetListItemsForActiveTemplates()
         {
             return _invoiceTemplateModel.GetAllTemplatesArray();
-            //return
-            //    _invoiceTemplateModel.GetAllActiveTemplates().Select(
-            //        template => new TemplateListItem
-            //            {
-            //                Id = template.Attribute("Id").Value,
-            //                Name = template.Attribute("Name").Value,
-            //                IsInUse = template.Attribute("Active").Value == "1"
-            //            }).ToArray();
         }
                 
         void OnSelectedTemplateChanged(object sender, EventArgs e)
         {
             if (_templateSelectorListBox.SelectedItem != null)
             {
-                //_invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
                 _invoiceTemplateModel.SetSelectedTemplate(Convert.ToByte(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id));
                 _invoiceFilesListBox.Items.Clear();
 
@@ -129,10 +101,15 @@ namespace zInvoiceTransformer
         {
             Log.LogThis("Starting Invoice Import Appliction", eloglevel.info);
 
-            var invoiceImportProcess = new Process();
+            var invoiceImportProcess = new Process
+            {
+                StartInfo =
+                {
+                    UseShellExecute = true, 
+                    FileName = _invoiceTemplateModel.ImportAppLocation
+                }
+            };
 
-            invoiceImportProcess.StartInfo.UseShellExecute = true;
-            invoiceImportProcess.StartInfo.FileName = _invoiceTemplateModel.ImportAppLocation;
             invoiceImportProcess.Start();
             invoiceImportProcess.WaitForExit();
             Log.LogThis("Invoice Import Appliction closed", eloglevel.info);
@@ -147,10 +124,10 @@ namespace zInvoiceTransformer
             try
             {
                 // could return an info object with transform details instead of just an int
-                TransformResultInfo transformResultInfo = _invoiceTemplateModel.DoTransform();
+                var transformResultInfo = _invoiceTemplateModel.DoTransform();
                 if (transformResultInfo.NumberOfInvoiceLinesProcessed > 0)
                 {
-                    _infoMsg = string.Format("{0} invoice lines processed", transformResultInfo.NumberOfInvoiceLinesProcessed);
+                    _infoMsg = $"{transformResultInfo.NumberOfInvoiceLinesProcessed} invoice lines processed";
                     _transformBackgroundWorker.ReportProgress(25);
                 }
                 else
@@ -162,7 +139,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred during transform stage: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred during transform stage: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured performing the invoice transfrom";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -179,7 +156,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred updating supplier name in Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred updating supplier name in Aztec: {ex}", eloglevel.error);
                 _errorMsg = "An error occured updating suplier name in Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -188,12 +165,11 @@ namespace zInvoiceTransformer
             try
             {
                 _invoiceTemplateModel.UpdateInvoiceImportFieldDefinitions(_invoiceTemplateModel.SelectedTemplate);
-                //WriteTransformValuesToAztec(_invoiceTemplateModel.SelectedTemplate);
                 _transformBackgroundWorker.ReportProgress(75);
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred writing field definitions to Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred writing field definitions to Aztec: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured writing field definitions to Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -206,7 +182,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred updating PurSysVar.ImportDir in Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred updating PurSysVar.ImportDir in Aztec: {ex}", eloglevel.error);
                 _errorMsg = "An error occured updating PurSysVar.ImportDir in Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -219,7 +195,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred starting the Invoice Import application: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred starting the Invoice Import application: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured while starting the Invoice Import application";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -287,14 +263,13 @@ namespace zInvoiceTransformer
         {
             var templateEditor = new TemplateEditor(_invoiceTemplateModel);
             templateEditor.ShowDialog(this);
-            LoadAndDisplayTemplates();
+            LoadAndDisplayTemplates(_invoiceTemplateModel.SelectedTemplate.Id);
         }
 
         private void OnImportApSettingsClick(object sender, EventArgs e)
         {
             var importAppSettings = new ImportApplicationConfigurationForm(_invoiceTemplateModel);
             importAppSettings.ShowDialog(this);
-            //LoadAndDisplayTemplates();
         }
 
         private static void OnCloseClick(object sender, EventArgs e)

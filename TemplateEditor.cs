@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System;
 using System.IO;
+using LogThis;
 using zInvoiceTransformer.Comms;
 using ZinvoiceTransformer.XmlHelpers;
 using ZinvoiceTransformer.XmlModels;
@@ -74,6 +75,7 @@ namespace zInvoiceTransformer
                 switch (result)
                 {
                     case DialogResult.Yes:
+                        SaveSelectedTemplateToTemplateList();
                         SaveTemplatesToFile();
                         InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
                         break;
@@ -296,12 +298,15 @@ namespace zInvoiceTransformer
         
         private void SaveTemplatesToFile()
         {
+            _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
+        }
+
+        private void SaveSelectedTemplateToTemplateList()
+        {
             var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
                 .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateClone.Id));
 
             _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
-
-            _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
         }
 
         private void _closeButton_Click(object sender, System.EventArgs e)
@@ -318,10 +323,14 @@ namespace zInvoiceTransformer
 
                 if(MessageBox.Show(this, $"Delete selected template '{item.Name}'", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    _invoiceTemplateModel.ImportTemplates.Templates.ToList().RemoveAll(t => t.Id.ToString() == item.Id);
+                    var templates = _invoiceTemplateModel.ImportTemplates.Templates.ToList();
+                    templates.RemoveAll(t => t.Id == _selectedTemplateClone.Id);
+                    _invoiceTemplateModel.ImportTemplates.Templates = templates.ToArray();
                     SaveTemplatesToFile();
                     InitializeTemplateModels(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault().Id);
                     PopulateTemplateListBox();
+                    PopulateUiWithSelectedTemplateClone();
+                    SetSelectedTemplate(_selectedTemplateClone.Id);
                 }
             }
             else
@@ -342,11 +351,27 @@ namespace zInvoiceTransformer
 
         private void _testRemoteTransferProtocolButton_Click(object sender, System.EventArgs e)
         {
-            var rc = RemoteConnectionFactory.Build((int)_protocolTypeComboBox.SelectedValue);
-            rc.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
-            var connected = rc.CheckConnection();
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                SaveUiChangesToSelectedTemplate();
 
-            MessageBox.Show(this,$"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"), "Test Connection", MessageBoxButtons.OK);
+                var rc = RemoteConnectionFactory.Build((int) _protocolTypeComboBox.SelectedValue);
+                rc.RemoteConnectionInfo = GetSelectedTemplateConnectionInfo();
+                var connected = rc.CheckConnection();
+
+                MessageBox.Show(this, $"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"),
+                    "Test Connection", MessageBoxButtons.OK);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.LogThis(ex.Message + '\n' + ex.StackTrace, eloglevel.error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
         }
 
         private void _saveButton_Click(object sender, System.EventArgs e)
@@ -357,6 +382,7 @@ namespace zInvoiceTransformer
             SaveUiChangesToSelectedTemplate();
             if (SelectedTemplateCloneHasEdits())
             {
+                SaveSelectedTemplateToTemplateList();
                 SaveTemplatesToFile();
                 InitializeTemplateModels(_selectedTemplateClone.Id);
             }
@@ -504,11 +530,16 @@ namespace zInvoiceTransformer
 
         private void _newTemplate_Click(object sender, EventArgs e)
         {
+            SaveUiChangesToSelectedTemplate();
+            if(SelectedTemplateCloneHasEdits())
+                _templatesListBoxSelectionChanged(sender, e);
+
             var newTemplate = new InvoiceImportTemplatesTemplate();
             int maxId = _invoiceTemplateModel.ImportTemplates.Templates.Max(x => x.Id);
 
             newTemplate.Id = (byte) (maxId + 1);
-            newTemplate.Name = "New Template";
+            newTemplate.Name = $"New Template {newTemplate.Id}";
+            newTemplate.Description = "";
             newTemplate.SourceFolder = "";
             newTemplate.OutputFolder = "";
             newTemplate.Delimiter = ",";
@@ -516,24 +547,56 @@ namespace zInvoiceTransformer
             newTemplate.HasHeaderRecord = false;
             newTemplate.HasMasterRecord = false;
             newTemplate.HasSummaryRecord = false;
-
-            newTemplate.MasterRow = new InvoiceImportTemplatesTemplateMasterRow();
-            newTemplate.DetailFields = new InvoiceImportTemplatesTemplateDetailFields();
-            newTemplate.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow();
-
-            var el = new InvoiceImportTemplatesTemplateDetailFieldsField();
-            var fieldDefs = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
-            foreach (var field in fieldDefs)
+            newTemplate.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
             {
-                el.FieldNameId = field.Id;
-                el.Delimited.Position = 0;
+                enabled = 0, tag = "*"
+            };
 
-                newTemplate.DetailFields.Field.ToList().Add(el);
+            newTemplate.MasterRow = new InvoiceImportTemplatesTemplateMasterRow
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                //Field = new InvoiceImportTemplatesTemplateMasterRowField[] { }
+            };
+
+            newTemplate.DetailFields = new InvoiceImportTemplatesTemplateDetailFields
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                Field = new InvoiceImportTemplatesTemplateDetailFieldsField[] { }
+            };
+
+            newTemplate.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                //Field = new InvoiceImportTemplatesTemplateSummaryRowField[] { }
+            };
+
+            // create all invoice definition fields as 'detail' rows
+            var detailFields = new List<InvoiceImportTemplatesTemplateDetailFieldsField>();
+            var invoiceFieldDefinitions = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
+            foreach (var definitionField in invoiceFieldDefinitions)
+            {
+                var detailField = new InvoiceImportTemplatesTemplateDetailFieldsField
+                {
+                    Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited { Position = 0 },
+                    FieldNameId = definitionField.Id
+                };
+                detailFields.Add(detailField);
+                
             }
-            _invoiceTemplateModel.ImportTemplates.Templates.ToList().Add(newTemplate);
+            newTemplate.DetailFields.Field = detailFields.ToArray();
+
+            var templateList = _invoiceTemplateModel.ImportTemplates.Templates.ToList();
+            templateList.Add(newTemplate);
+            _invoiceTemplateModel.ImportTemplates.Templates = templateList.ToArray();
+            
             SaveTemplatesToFile();
             InitializeTemplateModels(newTemplate.Id);
             PopulateTemplateListBox();
+            PopulateUiWithSelectedTemplateClone();
+            SetSelectedTemplate(newTemplate.Id);
         }
 
         private void TemplateEditor_FormClosing(object sender, FormClosingEventArgs e)
@@ -563,6 +626,31 @@ namespace zInvoiceTransformer
         private void _useEachesConversionCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
+        }
+        public RemoteInvoiceConnectionInfo GetSelectedTemplateConnectionInfo()
+        {
+            try
+            {
+                if (_selectedTemplateClone != null)
+                    return new RemoteInvoiceConnectionInfo
+                    {
+                        DestinationFolder = _selectedTemplateClone.SourceFolder,
+                        InvoiceFilePrefix = _selectedTemplateClone.RemoteInvoiceSettings.InvoiceFileCustomerPrefix,
+                        HostUrl = _selectedTemplateClone.RemoteInvoiceSettings.url,
+                        Port = _selectedTemplateClone.RemoteInvoiceSettings.port,
+                        Username = _selectedTemplateClone.RemoteInvoiceSettings.username,
+                        Password = _selectedTemplateClone.RemoteInvoiceSettings.password,
+                        RemoteFolder = _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder
+                    };
+
+                Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);
+                return null;
+            }
+            catch (Exception e)
+            {
+                Log.LogThis($"Unable to create RemoteInvoiceConnectionInfo, check invoice template: {e.Message}", eloglevel.error);
+                return null;
+            }
         }
     }
 }

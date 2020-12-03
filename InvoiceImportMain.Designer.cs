@@ -60,8 +60,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this._templateListPanel = new System.Windows.Forms.Panel();
             this._buttonPanel = new System.Windows.Forms.Panel();
-            this._getRemoteInvoicesButton = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this._getRemoteInvoicesButton = new System.Windows.Forms.Button();
             this._progressPanel.SuspendLayout();
             this._mainMenuStrip.SuspendLayout();
             this._mainPanel.SuspendLayout();
@@ -91,7 +91,7 @@
             this._templateSelectorListBox.Location = new System.Drawing.Point(0, 32);
             this._templateSelectorListBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._templateSelectorListBox.Name = "_templateSelectorListBox";
-            this._templateSelectorListBox.Size = new System.Drawing.Size(297, 420);
+            this._templateSelectorListBox.Size = new System.Drawing.Size(297, 422);
             this._templateSelectorListBox.TabIndex = 5;
             this.toolTip1.SetToolTip(this._templateSelectorListBox, "The selected the invoice template will be used during the transform");
             // 
@@ -168,14 +168,13 @@
             // 
             // _mainMenuStrip
             // 
-            this._mainMenuStrip.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
             this._mainMenuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this._mainMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.toolsToolStripMenuItem});
             this._mainMenuStrip.Location = new System.Drawing.Point(0, 0);
             this._mainMenuStrip.Name = "_mainMenuStrip";
-            this._mainMenuStrip.Size = new System.Drawing.Size(838, 35);
+            this._mainMenuStrip.Size = new System.Drawing.Size(838, 33);
             this._mainMenuStrip.TabIndex = 2;
             this._mainMenuStrip.Text = "menuStrip1";
             // 
@@ -239,10 +238,10 @@
             this._mainPanel.Controls.Add(this._contentPanel);
             this._mainPanel.Controls.Add(this._buttonPanel);
             this._mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._mainPanel.Location = new System.Drawing.Point(0, 35);
+            this._mainPanel.Location = new System.Drawing.Point(0, 33);
             this._mainPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._mainPanel.Name = "_mainPanel";
-            this._mainPanel.Size = new System.Drawing.Size(838, 522);
+            this._mainPanel.Size = new System.Drawing.Size(838, 524);
             this._mainPanel.TabIndex = 0;
             // 
             // _contentPanel
@@ -253,7 +252,7 @@
             this._contentPanel.Location = new System.Drawing.Point(0, 0);
             this._contentPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._contentPanel.Name = "_contentPanel";
-            this._contentPanel.Size = new System.Drawing.Size(838, 454);
+            this._contentPanel.Size = new System.Drawing.Size(838, 456);
             this._contentPanel.TabIndex = 18;
             // 
             // _templateInfoPanel
@@ -265,7 +264,7 @@
             this._templateInfoPanel.Location = new System.Drawing.Point(299, 0);
             this._templateInfoPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._templateInfoPanel.Name = "_templateInfoPanel";
-            this._templateInfoPanel.Size = new System.Drawing.Size(539, 454);
+            this._templateInfoPanel.Size = new System.Drawing.Size(539, 456);
             this._templateInfoPanel.TabIndex = 17;
             // 
             // _templateInfoInnerPanel
@@ -280,7 +279,7 @@
             this._templateInfoInnerPanel.Location = new System.Drawing.Point(0, 32);
             this._templateInfoInnerPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._templateInfoInnerPanel.Name = "_templateInfoInnerPanel";
-            this._templateInfoInnerPanel.Size = new System.Drawing.Size(537, 420);
+            this._templateInfoInnerPanel.Size = new System.Drawing.Size(537, 422);
             this._templateInfoInnerPanel.TabIndex = 17;
             // 
             // label1
@@ -343,7 +342,7 @@
             this._templateListPanel.Location = new System.Drawing.Point(0, 0);
             this._templateListPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._templateListPanel.Name = "_templateListPanel";
-            this._templateListPanel.Size = new System.Drawing.Size(299, 454);
+            this._templateListPanel.Size = new System.Drawing.Size(299, 456);
             this._templateListPanel.TabIndex = 18;
             // 
             // _buttonPanel
@@ -353,11 +352,22 @@
             this._buttonPanel.Controls.Add(this._doTransformButton);
             this._buttonPanel.Controls.Add(this._closeButton);
             this._buttonPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._buttonPanel.Location = new System.Drawing.Point(0, 454);
+            this._buttonPanel.Location = new System.Drawing.Point(0, 456);
             this._buttonPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._buttonPanel.Name = "_buttonPanel";
             this._buttonPanel.Size = new System.Drawing.Size(838, 68);
             this._buttonPanel.TabIndex = 17;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(250, 17);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 35);
+            this.button1.TabIndex = 10;
+            this.button1.Text = "upload";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Visible = false;
+            this.button1.Click += new System.EventHandler(this.Button1_Click);
             // 
             // _getRemoteInvoicesButton
             // 
@@ -368,16 +378,6 @@
             this._getRemoteInvoicesButton.TabIndex = 9;
             this._getRemoteInvoicesButton.Text = "Download Remote Invoices";
             this._getRemoteInvoicesButton.UseVisualStyleBackColor = true;
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(250, 17);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 35);
-            this.button1.TabIndex = 10;
-            this.button1.Text = "upload";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.Button1_Click);
             // 
             // InvoiceImportMain
             // 
