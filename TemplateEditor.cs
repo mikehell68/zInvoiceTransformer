@@ -163,11 +163,11 @@ namespace zInvoiceTransformer
                 
                 var transferProtocols = _invoiceTemplateModel.ImportTemplates.Definitions
                     .RemoteTransferProtocolTypes
-                    .Select(el => new { id = Convert.ToInt32(el.Id), name = el.Name }).ToArray();
+                    .Select(el => new KeyValuePair<int, string>(Convert.ToInt32(el.Id), el.Name)).ToList();
 
                 _protocolTypeComboBox.DataSource = transferProtocols;
-                _protocolTypeComboBox.DisplayMember = "name";
-                _protocolTypeComboBox.ValueMember = "id";
+                _protocolTypeComboBox.DisplayMember = "value";
+                _protocolTypeComboBox.ValueMember = "key";
                 _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateClone.RemoteInvoiceSettings?.RemoteTransferProtocolTypeId);
 
                 _urlTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.url;
@@ -651,6 +651,11 @@ namespace zInvoiceTransformer
                 Log.LogThis($"Unable to create RemoteInvoiceConnectionInfo, check invoice template: {e.Message}", eloglevel.error);
                 return null;
             }
+        }
+
+        private void _protocolTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _remoteSettingsFieldPanel.Enabled = ((KeyValuePair<int, string>)_protocolTypeComboBox.SelectedItem).Key > 0;
         }
     }
 }
