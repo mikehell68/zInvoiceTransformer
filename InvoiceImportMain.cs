@@ -39,7 +39,7 @@ namespace zInvoiceTransformer
         void InvoiceTransformer_Load(object sender, EventArgs e)
         {
             BindControls();
-            LoadAndDisplayTemplates();
+            LoadAndDisplayTemplates(null);
         }
 
         void BindControls()
@@ -50,7 +50,7 @@ namespace zInvoiceTransformer
                 false, DataSourceUpdateMode.Never));
         }
 
-        private void LoadAndDisplayTemplates(int templateId = 1)
+        private void LoadAndDisplayTemplates(int? templateId)
         {
             _invoiceTemplateModel.LoadTemplates();
             _templateSelectorListBox.Items.Clear();
@@ -58,8 +58,12 @@ namespace zInvoiceTransformer
             
             _templateSelectorListBox.Items.AddRange(GetListItemsForActiveTemplates());
 
-            _templateSelectorListBox.SelectedItem = _templateSelectorListBox.Items.OfType<TemplateListItem>()
-                .FirstOrDefault(ti => ti.Id == templateId.ToString());
+            if (templateId == null)
+                _templateSelectorListBox.SelectedIndex = 0;
+            else
+                _templateSelectorListBox.SelectedItem = _templateSelectorListBox.
+                    Items.OfType<TemplateListItem>().
+                    FirstOrDefault(ti => ti.Id == templateId.ToString());
 
             //_templateSelectorListBox.SetSelected(0, true);
         }
