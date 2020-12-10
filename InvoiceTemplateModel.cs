@@ -147,28 +147,24 @@ namespace zInvoiceTransformer
         public string[] GetSelectedTemplateImportFiles()
         {
             if (SelectedTemplate == null)
-                return new string[]{ "<-no supplier selected->" };
+                return new[]{ "<-no supplier selected->" };
 
-            string sourceFolder = SelectedTemplate.SourceFolder;
+            var sourceFolder = SelectedTemplate.SourceFolder;
             var files = new List<string>
             {
                 sourceFolder
             };
 
-            if (Directory.Exists(sourceFolder))
-            {
-                var fileList = Directory.GetFiles(sourceFolder).Select(Path.GetFileName).ToArray();
+            if (!Directory.Exists(sourceFolder)) 
+                return new[] {sourceFolder, "<-folder not found->"};
 
-                if (fileList.Any())
-                {
-                    files.AddRange(fileList);
-                    return files.ToArray();
-                }
-                else
-                    return new string[]{ sourceFolder, "<-folder empty->" };
-            }
+            var fileList = Directory.GetFiles(sourceFolder).Select(Path.GetFileName).ToArray();
+
+            if (!fileList.Any()) 
+                return new[] {sourceFolder, "<-folder empty->"};
             
-            return null;
+            files.AddRange(fileList);
+            return files.ToArray();
         }
 
         public RemoteInvoiceConnectionInfo GetSelectedTemplateConnectionInfo()

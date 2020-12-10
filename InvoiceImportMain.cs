@@ -78,13 +78,15 @@ namespace zInvoiceTransformer
             if (_templateSelectorListBox.SelectedItem != null)
             {
                 _invoiceTemplateModel.SetSelectedTemplate(Convert.ToByte(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id));
+                CheckWorkingFolders();
                 RefreshFileList();
             }
         }
 
         static void StartZonalImportApp()
         {
-            Log.LogThis("Starting Invoice Import Appliction", eloglevel.info);
+            Log.LogThis("Starting Invoice Import Application", eloglevel.info);
+            Log.LogThis($"Invoice Import Application location: '{_invoiceTemplateModel.ImportAppLocation}'", eloglevel.info);
 
             var invoiceImportProcess = new Process
             {
@@ -97,7 +99,7 @@ namespace zInvoiceTransformer
 
             invoiceImportProcess.Start();
             invoiceImportProcess.WaitForExit();
-            Log.LogThis("Invoice Import Appliction closed", eloglevel.info);
+            Log.LogThis("Invoice Import Application closed", eloglevel.info);
         }
 
         private void TransformBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -212,6 +214,12 @@ namespace zInvoiceTransformer
 
         private void OnDoTransformAndImportClick(object sender, EventArgs e)
         {
+            if (!CheckWorkingFolders())
+            {
+                MessageBox.Show(this, "Cannot run import.\nApplication folders are not valid", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             _errorMsg = "";
             if (_invoiceTemplateModel.SelectedTemplate == null)
             {
@@ -284,20 +292,62 @@ namespace zInvoiceTransformer
 
             if (fileList != null)
                 _invoiceFilesListBox.Items.AddRange(fileList);
-            else
+        }
+
+        bool CheckWorkingFolders()
+        {
+            var result = true;
+
+            if (!Directory.Exists(_invoiceTemplateModel.SelectedTemplate.SourceFolder))
             {
-                if (MessageBox.Show(
-                        this,
-                        "Could not find invoice source folder: " + '\n' +
-                        _invoiceTemplateModel.SelectedTemplate.SourceFolder +
-                        '\n' + "Do you want to create the folder now?",
-                        Resources.AppNameText,
-                        MessageBoxButtons.YesNoCancel,
-                        MessageBoxIcon.Warning) == DialogResult.Yes)
+                if (ShowFolderNotFoundDialog("source", _invoiceTemplateModel.SelectedTemplate.SourceFolder) ==
+                    DialogResult.Yes)
                 {
                     Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.SourceFolder);
                 }
+                else
+                {
+                    result = false;
+                }
             }
+
+            if (!Directory.Exists(_invoiceTemplateModel.SelectedTemplate.OutputFolder))
+            {
+                if (ShowFolderNotFoundDialog("output", _invoiceTemplateModel.SelectedTemplate.OutputFolder) ==
+                    DialogResult.Yes)
+                {
+                    Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.OutputFolder);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            if (!File.Exists(_invoiceTemplateModel.ImportAppLocation))
+            {
+                MessageBox.Show(this,
+                    "The Import Application cannot be found.\nCheck 'Tools | Application Settings'",
+                    Application.ProductName,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                
+                result = false;
+            }
+
+            return result;
+        }
+
+        DialogResult ShowFolderNotFoundDialog(string folderType, string folderPath)
+        {
+            return 
+                MessageBox.Show(
+                this,
+                $"Could not find invoice {folderType} folder: " + 
+                '\n' + folderPath + "\n\nDo you want to create the folder now?",
+                Resources.AppNameText,
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
         }
 
         void InitialiseClientConnectionDetails()
