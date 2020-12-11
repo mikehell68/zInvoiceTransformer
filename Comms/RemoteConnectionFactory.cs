@@ -11,11 +11,7 @@ namespace zInvoiceTransformer.Comms
                 case 0:
                     return null;
                 case 1:
-                    return new FtpClient();
-                case 2:
                     return new SecureFtpClient();
-                case 3:
-                    return new ApiClient();
                 default:
                     throw new ArgumentException("Unknown protocol type");
             }

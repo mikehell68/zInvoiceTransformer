@@ -1,0 +1,338 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- InvoiceNumber|InvoiceDate|ProductName|ProductName|EachesQuantity|PriceUnitMeasure|UnitCost|TotalCost|ImportReference"-->
+<InvoiceImportTemplates>
+  <Definitions>
+    <FieldNames>
+      <FieldName Id="1" Name="InvoiceNumber" />
+      <FieldName Id="2" Name="InvoiceDate" />
+      <FieldName Id="3" Name="ProductName" />
+      <FieldName Id="4" Name="UnitsQuantity" />
+      <FieldName Id="5" Name="EachesQuantity" />
+      <FieldName Id="6" Name="PriceUnitMeasure" />
+      <FieldName Id="7" Name="UnitCost" />
+      <FieldName Id="8" Name="TotalCost" />
+      <FieldName Id="9" Name="ImportReference" />
+    </FieldNames>
+    <FileFormatTypes>
+      <FileFormatType Id="1" Name="delemited" />
+      <FileFormatType Id="2" Name="indexed" />
+      <FileFormatType Id="3" Name="xml" />
+    </FileFormatTypes>
+	<RemoteTransferProtocolTypes>
+      <RemoteTransferProtocolType Id="0" Name="None" />
+      <RemoteTransferProtocolType Id="1" Name="sFTP" />
+    </RemoteTransferProtocolTypes>
+  </Definitions>
+  <ImportSettings>
+    <ImportAppliction FileName="C:\Program Files (x86)\ZonalCustom\PurchaseImport\ImportProgram.exe" InvoiceFileLocation="C:\Invoice Files" />
+    <ImportOrder>
+      <Template Id="1" />
+      <Template Id="2" />
+    </ImportOrder>
+  </ImportSettings>
+  <Templates>
+    <Template Id="1" Name="Sunrise Produce Jacksonville" Active="0" TemplateVersion="1" Description="Sunrise Produce Jacksonville" FileFormatTypeId="1" SourceFolder="C:\Invoice Files\Sunshine Produce\Downloads" OutputFolder="C:\Invoice Files\Sunshine Produce\Import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+      <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
+        <Field FieldNameId="1">
+          <Delimited Position="2" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="3" />
+        </Field>
+      </MasterRow>
+      <DetailFields RecordTypePostion="0" RecordTypeIdentifier="2">
+        <Field FieldNameId="3">
+          <Delimited Position="5" />
+        </Field>
+        <Field FieldNameId="4">
+          <Delimited Position="3" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="7" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="6" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="2" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="4" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="1" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <EachesConversion enabled="1" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="0" Length="6" />
+          <Field FieldNameId="2" DataType="date" Name="InvoiceDate" Start="17" Length="6" DateFormat="MM/dd/yy" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="113" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="69" Length="4" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="73" Length="3" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="88" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="83" Length="5" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="105" Length="8" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+    </Template>
+    <Template Id="4" Name="Roma" Active="0" TemplateVersion="2" Description="Roma Vistar invoice long format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="0" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+      <MasterRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <DetailFields RecordTypePostion="-1" RecordTypeIdentifier="">
+        <Field FieldNameId="1">
+          <Delimited Position="6" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="7" />
+        </Field>
+        <Field FieldNameId="3">
+          <Delimited Position="20" />
+        </Field>
+        <Field FieldNameId="4">
+          <Delimited Position="9" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="9" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="10" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="14" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="15" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="19" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <EachesConversion enabled="0" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="0" Length="6" />
+          <Field FieldNameId="2" DataType="date" Name="InvoiceDate" Start="17" Length="6" DateFormat="YYYYMMdd" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="113" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="69" Length="4" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="73" Length="3" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="88" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="83" Length="5" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="105" Length="8" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+    </Template>
+    <Template Id="2" Name="US Food" Active="0" TemplateVersion="1" Description="US Food Invoice" FileFormatTypeId="1" SourceFolder="c:\temp\usfood" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="1" HasMasterRecord="0" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+      <MasterRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <DetailFields RecordTypePostion="1" RecordTypeIdentifier="INVOICE">
+        <Field FieldNameId="1">
+          <Delimited Position="0" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="2" />
+        </Field>
+        <Field FieldNameId="3">
+          <Delimited Position="47" />
+        </Field>
+        <Field FieldNameId="4">
+          <Delimited Position="51" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="52" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="54" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="55" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="56" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="46" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <EachesConversion enabled="0" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="0" Length="6" />
+          <Field FieldNameId="2" DataType="date" DateFormat="MM/dd/yyyy" Name="InvoiceDate" Start="17" Length="6" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="113" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="69" Length="4" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="73" Length="3" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="88" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="83" Length="5" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="105" Length="8" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+    </Template>
+    <Template Id="3" Name="Sysco Food Service" Active="1" TemplateVersion="1" Description="Generic SUS Invoice CSV Layout" FileFormatTypeId="1" SourceFolder="C:\Invoice Files\Sysco\Downloads" OutputFolder="C:\Invoice Files\Sysco\Import" Delimiter="," LbProcessingType="1" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="1" UoMCase="CA" UoMEach="EA" UoMWeight="LB">
+      <MasterRow RecordTypePostion="5" RecordTypeIdentifier="HDR">
+        <Field FieldNameId="1">
+          <Delimited Position="4" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="10" />
+        </Field>
+      </MasterRow>
+      <DetailFields RecordTypePostion="5" RecordTypeIdentifier="DET">
+        <Field FieldNameId="3">
+          <Delimited Position="29" />
+        </Field>
+        <Field FieldNameId="4" DirectiveId="1">
+          <Delimited Position="11" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="10" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="14" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="13" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="15" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="44" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="5" RecordTypeIdentifier="SUM" />
+      <Directives>
+        <Directive Id="1" Name="UnitsQuantityAsPartialCase">
+          <Condition ConditionFieldPosition="8" ConditionValue="1" />
+          <Calculation>
+            <Operand1 sourceFieldPosition="10" />
+            <Operand2 sourceFieldPosition="26" />
+            <Operator OpType="division" />
+          </Calculation>
+        </Directive>
+      </Directives>
+      <EachesConversion enabled="0" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="0" Length="6" />
+          <Field FieldNameId="2" DataType="date" DateFormat="yyMMdd" Name="InvoiceDate" Start="17" Length="6" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="113" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="69" Length="4" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="73" Length="3" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="88" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="83" Length="5" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="105" Length="8" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+    </Template>
+    <Template Id="5" Name="Gordon Food Service" Active="0" TemplateVersion="1" Description="GFS Invoice short format using Zonal Standard" FileFormatTypeId="1" SourceFolder="C:\Invoice Files\GFS\Downloads" OutputFolder="C:\Invoice Files\GFS\Import" Delimiter="," LbProcessingType="1" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+      <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
+        <Field FieldNameId="1">
+          <Delimited Position="2" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="3" />
+        </Field>
+      </MasterRow>
+      <DetailFields RecordTypePostion="0" RecordTypeIdentifier="2">
+        <Field FieldNameId="3">
+          <Delimited Position="5" />
+        </Field>
+        <Field FieldNameId="4">
+          <Delimited Position="3" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="7" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="6" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="2" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="4" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="1" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="-1" RecordTypeIdentifier="" />
+      <EachesConversion enabled="1" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="0" Length="6" />
+          <Field FieldNameId="2" DataType="date" Name="InvoiceDate" Start="17" Length="6" DateFormat="MM/dd/yy" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="113" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="69" Length="4" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="73" Length="3" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="88" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="83" Length="5" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="105" Length="8" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="52" Length="7" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate></InvoiceNumbersToUpdate>
+    </Template>
+    <Template Id="6" Name="US Food (A2A)" Active="true" TemplateVersion="1" Description="US Food Invoice" FileFormatTypeId="1" SourceFolder="C:\InvoiceImportEnv\usfood" OutputFolder="C:\InvoiceImportEnv\import" Delimiter="~" LbProcessingType="1" HasHeaderRecord="false" HasMasterRecord="true" HasSummaryRecord="true" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
+      <RemoteInvoiceSettings RemoteTransferProtocolTypeId="1" url="ediprod.usfoods.com" port="22" username="ECWDBARB" password="br7SwiMa" keyfileLocation="C:\temp" RemoteFolder="./inv" InvoiceFileCustomerPrefix="" />
+      <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">
+        <Field FieldNameId="1">
+          <Delimited Position="20" />
+        </Field>
+        <Field FieldNameId="2">
+          <Delimited Position="4" />
+        </Field>
+      </MasterRow>
+      <DetailFields RecordTypePostion="0" RecordTypeIdentifier="2">
+        <Field FieldNameId="3">
+          <Delimited Position="8" />
+        </Field>
+        <Field FieldNameId="4">
+          <Delimited Position="16" />
+        </Field>
+        <Field FieldNameId="5">
+          <Delimited Position="16" />
+        </Field>
+        <Field FieldNameId="6">
+          <Delimited Position="28" />
+        </Field>
+        <Field FieldNameId="7">
+          <Delimited Position="21" />
+        </Field>
+        <Field FieldNameId="8">
+          <Delimited Position="23" />
+        </Field>
+        <Field FieldNameId="9">
+          <Delimited Position="72" />
+        </Field>
+      </DetailFields>
+      <SummaryRow RecordTypePostion="0" RecordTypeIdentifier="3" />
+      <EachesConversion enabled="0" tag="*" />
+      <TemplateTransform>
+        <Fields>
+          <Field FieldNameId="1" DataType="string" Name="InvoiceNumber" Start="1" Length="10" />
+          <Field FieldNameId="2" DataType="date" Name="InvoiceDate" Start="11" Length="6" DateFormat="yyyyMMdd" />
+          <Field FieldNameId="3" DataType="string" Name="ProductName" Start="17" Length="30" />
+          <Field FieldNameId="4" DataType="int" Name="UnitsQuantity" Start="47" Length="6" />
+          <Field FieldNameId="5" DataType="int" Name="EachesQuantity" Start="53" Length="6" />
+          <Field FieldNameId="6" DataType="string" Name="PriceUnitMeasure" Start="59" Length="2" />
+          <Field FieldNameId="7" DataType="int" Name="UnitCost" Start="61" Length="10" />
+          <Field FieldNameId="8" DataType="int" Name="TotalCost" Start="71" Length="10" />
+          <Field FieldNameId="9" DataType="string" Name="ImportReference" Start="81" Length="11" />
+        </Fields>
+      </TemplateTransform>
+      <InvoiceNumbersToUpdate />
+    </Template>
+  </Templates>
+</InvoiceImportTemplates>

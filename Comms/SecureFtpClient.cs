@@ -21,14 +21,11 @@ namespace zInvoiceTransformer.Comms
                 
            RemoteConnectionInfo.Validate();
            
-           bool result = false;
-           //PrivateKeyFile keyFile = new PrivateKeyFile(@"path/to/OpenSsh-RSA-key.ppk");
-           //var keyFiles = new[] { keyFile };
-
+           bool result;
+           
            var methods = new List<AuthenticationMethod>
            {
                new PasswordAuthenticationMethod(RemoteConnectionInfo.Username, RemoteConnectionInfo.Password)
-               //methods.Add(new PrivateKeyAuthenticationMethod(username, keyFiles));
            };
 
            _connectionInfo = new ConnectionInfo(RemoteConnectionInfo.HostUrl, RemoteConnectionInfo.Port, RemoteConnectionInfo.Username, methods.ToArray());
@@ -39,11 +36,6 @@ namespace zInvoiceTransformer.Comms
                { 
                    client.Connect();
                    result = client.IsConnected;
-               }
-               catch (Exception e)
-               {
-                   Console.WriteLine(e);
-                   //throw;
                }
                finally
                {

@@ -84,22 +84,23 @@
             this.label11 = new System.Windows.Forms.Label();
             this._templateRemoteInvoiveSettingsTabPage = new System.Windows.Forms.TabPage();
             this._remoteInvoiceMainPanel = new System.Windows.Forms.Panel();
-            this._remoteFolderTextbox = new System.Windows.Forms.TextBox();
-            this._remoteFolderLabel = new System.Windows.Forms.Label();
+            this._remoteSettingsFieldPanel = new System.Windows.Forms.Panel();
             this._invoiceFilePrefixTextBox = new System.Windows.Forms.TextBox();
+            this._remoteFolderTextbox = new System.Windows.Forms.TextBox();
+            this._urlLabel = new System.Windows.Forms.Label();
+            this._remoteFolderLabel = new System.Windows.Forms.Label();
+            this._portLabel = new System.Windows.Forms.Label();
+            this._usernameLabel = new System.Windows.Forms.Label();
             this._invoiceFilePrefixLabel = new System.Windows.Forms.Label();
+            this._passwordLabel = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
+            this._keyfileLocationLabel = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this._urlTextbox = new System.Windows.Forms.TextBox();
             this._keyfileLocationTextbox = new System.Windows.Forms.TextBox();
+            this._passwordTextbox = new System.Windows.Forms.TextBox();
             this._portTextbox = new System.Windows.Forms.TextBox();
             this._usernameTextbox = new System.Windows.Forms.TextBox();
-            this._passwordTextbox = new System.Windows.Forms.TextBox();
-            this._urlTextbox = new System.Windows.Forms.TextBox();
-            this._keyfileLocationLabel = new System.Windows.Forms.Label();
-            this._passwordLabel = new System.Windows.Forms.Label();
-            this._usernameLabel = new System.Windows.Forms.Label();
-            this._portLabel = new System.Windows.Forms.Label();
-            this._urlLabel = new System.Windows.Forms.Label();
             this._protocolTypeComboBox = new System.Windows.Forms.ComboBox();
             this._protocolTypeLabel = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -134,6 +135,7 @@
             ((System.ComponentModel.ISupportInitialize)(this._detailRecordPositionNumericUpDown)).BeginInit();
             this._templateRemoteInvoiveSettingsTabPage.SuspendLayout();
             this._remoteInvoiceMainPanel.SuspendLayout();
+            this._remoteSettingsFieldPanel.SuspendLayout();
             this.panel1.SuspendLayout();
             this._templateSelectorPanel.SuspendLayout();
             this._templateSelectorListPanel.SuspendLayout();
@@ -790,22 +792,7 @@
             // 
             // _remoteInvoiceMainPanel
             // 
-            this._remoteInvoiceMainPanel.Controls.Add(this._remoteFolderTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._remoteFolderLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this._invoiceFilePrefixTextBox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._invoiceFilePrefixLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this.button2);
-            this._remoteInvoiceMainPanel.Controls.Add(this.button1);
-            this._remoteInvoiceMainPanel.Controls.Add(this._keyfileLocationTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._portTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._usernameTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._passwordTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._urlTextbox);
-            this._remoteInvoiceMainPanel.Controls.Add(this._keyfileLocationLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this._passwordLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this._usernameLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this._portLabel);
-            this._remoteInvoiceMainPanel.Controls.Add(this._urlLabel);
+            this._remoteInvoiceMainPanel.Controls.Add(this._remoteSettingsFieldPanel);
             this._remoteInvoiceMainPanel.Controls.Add(this._protocolTypeComboBox);
             this._remoteInvoiceMainPanel.Controls.Add(this._protocolTypeLabel);
             this._remoteInvoiceMainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -815,45 +802,108 @@
             this._remoteInvoiceMainPanel.Size = new System.Drawing.Size(670, 665);
             this._remoteInvoiceMainPanel.TabIndex = 0;
             // 
+            // _remoteSettingsFieldPanel
+            // 
+            this._remoteSettingsFieldPanel.Controls.Add(this._invoiceFilePrefixTextBox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._remoteFolderTextbox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._urlLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this._remoteFolderLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this._portLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this._usernameLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this._invoiceFilePrefixLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this._passwordLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this.button2);
+            this._remoteSettingsFieldPanel.Controls.Add(this._keyfileLocationLabel);
+            this._remoteSettingsFieldPanel.Controls.Add(this.button1);
+            this._remoteSettingsFieldPanel.Controls.Add(this._urlTextbox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._keyfileLocationTextbox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._passwordTextbox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._portTextbox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._usernameTextbox);
+            this._remoteSettingsFieldPanel.Location = new System.Drawing.Point(28, 96);
+            this._remoteSettingsFieldPanel.Name = "_remoteSettingsFieldPanel";
+            this._remoteSettingsFieldPanel.Size = new System.Drawing.Size(555, 356);
+            this._remoteSettingsFieldPanel.TabIndex = 17;
+            // 
+            // _invoiceFilePrefixTextBox
+            // 
+            this._invoiceFilePrefixTextBox.Location = new System.Drawing.Point(205, 16);
+            this._invoiceFilePrefixTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this._invoiceFilePrefixTextBox.Name = "_invoiceFilePrefixTextBox";
+            this._invoiceFilePrefixTextBox.Size = new System.Drawing.Size(280, 26);
+            this._invoiceFilePrefixTextBox.TabIndex = 1;
+            // 
             // _remoteFolderTextbox
             // 
-            this._remoteFolderTextbox.Location = new System.Drawing.Point(180, 287);
+            this._remoteFolderTextbox.Location = new System.Drawing.Point(205, 203);
             this._remoteFolderTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._remoteFolderTextbox.Name = "_remoteFolderTextbox";
             this._remoteFolderTextbox.Size = new System.Drawing.Size(280, 26);
             this._remoteFolderTextbox.TabIndex = 7;
             // 
+            // _urlLabel
+            // 
+            this._urlLabel.AutoSize = true;
+            this._urlLabel.Location = new System.Drawing.Point(61, 56);
+            this._urlLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._urlLabel.Name = "_urlLabel";
+            this._urlLabel.Size = new System.Drawing.Size(67, 20);
+            this._urlLabel.TabIndex = 2;
+            this._urlLabel.Text = "HostUrl:";
+            // 
             // _remoteFolderLabel
             // 
             this._remoteFolderLabel.AutoSize = true;
-            this._remoteFolderLabel.Location = new System.Drawing.Point(36, 290);
+            this._remoteFolderLabel.Location = new System.Drawing.Point(61, 206);
             this._remoteFolderLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this._remoteFolderLabel.Name = "_remoteFolderLabel";
             this._remoteFolderLabel.Size = new System.Drawing.Size(119, 20);
             this._remoteFolderLabel.TabIndex = 16;
             this._remoteFolderLabel.Text = "Remote Folder:";
             // 
-            // _invoiceFilePrefixTextBox
+            // _portLabel
             // 
-            this._invoiceFilePrefixTextBox.Location = new System.Drawing.Point(180, 46);
-            this._invoiceFilePrefixTextBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this._invoiceFilePrefixTextBox.Name = "_invoiceFilePrefixTextBox";
-            this._invoiceFilePrefixTextBox.Size = new System.Drawing.Size(280, 26);
-            this._invoiceFilePrefixTextBox.TabIndex = 1;
+            this._portLabel.AutoSize = true;
+            this._portLabel.Location = new System.Drawing.Point(61, 91);
+            this._portLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._portLabel.Name = "_portLabel";
+            this._portLabel.Size = new System.Drawing.Size(42, 20);
+            this._portLabel.TabIndex = 3;
+            this._portLabel.Text = "Port:";
+            // 
+            // _usernameLabel
+            // 
+            this._usernameLabel.AutoSize = true;
+            this._usernameLabel.Location = new System.Drawing.Point(61, 128);
+            this._usernameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._usernameLabel.Name = "_usernameLabel";
+            this._usernameLabel.Size = new System.Drawing.Size(87, 20);
+            this._usernameLabel.TabIndex = 4;
+            this._usernameLabel.Text = "Username:";
             // 
             // _invoiceFilePrefixLabel
             // 
             this._invoiceFilePrefixLabel.AutoSize = true;
-            this._invoiceFilePrefixLabel.Location = new System.Drawing.Point(36, 51);
+            this._invoiceFilePrefixLabel.Location = new System.Drawing.Point(61, 21);
             this._invoiceFilePrefixLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this._invoiceFilePrefixLabel.Name = "_invoiceFilePrefixLabel";
             this._invoiceFilePrefixLabel.Size = new System.Drawing.Size(135, 20);
             this._invoiceFilePrefixLabel.TabIndex = 14;
             this._invoiceFilePrefixLabel.Text = "Invoice File Prefix:";
             // 
+            // _passwordLabel
+            // 
+            this._passwordLabel.AutoSize = true;
+            this._passwordLabel.Location = new System.Drawing.Point(61, 168);
+            this._passwordLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._passwordLabel.Name = "_passwordLabel";
+            this._passwordLabel.Size = new System.Drawing.Size(82, 20);
+            this._passwordLabel.TabIndex = 5;
+            this._passwordLabel.Text = "Password:";
+            // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(227, 368);
+            this.button2.Location = new System.Drawing.Point(296, 295);
             this.button2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(189, 35);
@@ -862,28 +912,58 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this._testRemoteTransferProtocolButton_Click);
             // 
+            // _keyfileLocationLabel
+            // 
+            this._keyfileLocationLabel.AutoSize = true;
+            this._keyfileLocationLabel.Location = new System.Drawing.Point(61, 242);
+            this._keyfileLocationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this._keyfileLocationLabel.Name = "_keyfileLocationLabel";
+            this._keyfileLocationLabel.Size = new System.Drawing.Size(124, 20);
+            this._keyfileLocationLabel.TabIndex = 6;
+            this._keyfileLocationLabel.Text = "Keyfile Location:";
+            this._keyfileLocationLabel.Visible = false;
+            // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(468, 323);
+            this.button1.Location = new System.Drawing.Point(493, 234);
             this.button1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(39, 31);
             this.button1.TabIndex = 9;
             this.button1.Text = "...";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Visible = false;
             this.button1.Click += new System.EventHandler(this._selectKeyfileLocationButton_Click);
+            // 
+            // _urlTextbox
+            // 
+            this._urlTextbox.Location = new System.Drawing.Point(205, 52);
+            this._urlTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this._urlTextbox.Name = "_urlTextbox";
+            this._urlTextbox.Size = new System.Drawing.Size(280, 26);
+            this._urlTextbox.TabIndex = 3;
             // 
             // _keyfileLocationTextbox
             // 
-            this._keyfileLocationTextbox.Location = new System.Drawing.Point(180, 323);
+            this._keyfileLocationTextbox.Location = new System.Drawing.Point(205, 239);
             this._keyfileLocationTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._keyfileLocationTextbox.Name = "_keyfileLocationTextbox";
             this._keyfileLocationTextbox.Size = new System.Drawing.Size(280, 26);
             this._keyfileLocationTextbox.TabIndex = 8;
+            this._keyfileLocationTextbox.Visible = false;
+            // 
+            // _passwordTextbox
+            // 
+            this._passwordTextbox.Location = new System.Drawing.Point(205, 164);
+            this._passwordTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this._passwordTextbox.Name = "_passwordTextbox";
+            this._passwordTextbox.PasswordChar = '*';
+            this._passwordTextbox.Size = new System.Drawing.Size(280, 26);
+            this._passwordTextbox.TabIndex = 6;
             // 
             // _portTextbox
             // 
-            this._portTextbox.Location = new System.Drawing.Point(180, 168);
+            this._portTextbox.Location = new System.Drawing.Point(205, 88);
             this._portTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._portTextbox.Name = "_portTextbox";
             this._portTextbox.Size = new System.Drawing.Size(280, 26);
@@ -891,92 +971,26 @@
             // 
             // _usernameTextbox
             // 
-            this._usernameTextbox.Location = new System.Drawing.Point(180, 208);
+            this._usernameTextbox.Location = new System.Drawing.Point(205, 124);
             this._usernameTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._usernameTextbox.Name = "_usernameTextbox";
             this._usernameTextbox.Size = new System.Drawing.Size(280, 26);
             this._usernameTextbox.TabIndex = 5;
             // 
-            // _passwordTextbox
-            // 
-            this._passwordTextbox.Location = new System.Drawing.Point(180, 248);
-            this._passwordTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this._passwordTextbox.Name = "_passwordTextbox";
-            this._passwordTextbox.PasswordChar = '*';
-            this._passwordTextbox.Size = new System.Drawing.Size(280, 26);
-            this._passwordTextbox.TabIndex = 6;
-            // 
-            // _urlTextbox
-            // 
-            this._urlTextbox.Location = new System.Drawing.Point(180, 128);
-            this._urlTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this._urlTextbox.Name = "_urlTextbox";
-            this._urlTextbox.Size = new System.Drawing.Size(280, 26);
-            this._urlTextbox.TabIndex = 3;
-            // 
-            // _keyfileLocationLabel
-            // 
-            this._keyfileLocationLabel.AutoSize = true;
-            this._keyfileLocationLabel.Location = new System.Drawing.Point(36, 326);
-            this._keyfileLocationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._keyfileLocationLabel.Name = "_keyfileLocationLabel";
-            this._keyfileLocationLabel.Size = new System.Drawing.Size(124, 20);
-            this._keyfileLocationLabel.TabIndex = 6;
-            this._keyfileLocationLabel.Text = "Keyfile Location:";
-            // 
-            // _passwordLabel
-            // 
-            this._passwordLabel.AutoSize = true;
-            this._passwordLabel.Location = new System.Drawing.Point(36, 252);
-            this._passwordLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._passwordLabel.Name = "_passwordLabel";
-            this._passwordLabel.Size = new System.Drawing.Size(82, 20);
-            this._passwordLabel.TabIndex = 5;
-            this._passwordLabel.Text = "Password:";
-            // 
-            // _usernameLabel
-            // 
-            this._usernameLabel.AutoSize = true;
-            this._usernameLabel.Location = new System.Drawing.Point(36, 212);
-            this._usernameLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._usernameLabel.Name = "_usernameLabel";
-            this._usernameLabel.Size = new System.Drawing.Size(87, 20);
-            this._usernameLabel.TabIndex = 4;
-            this._usernameLabel.Text = "Username:";
-            // 
-            // _portLabel
-            // 
-            this._portLabel.AutoSize = true;
-            this._portLabel.Location = new System.Drawing.Point(36, 172);
-            this._portLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._portLabel.Name = "_portLabel";
-            this._portLabel.Size = new System.Drawing.Size(42, 20);
-            this._portLabel.TabIndex = 3;
-            this._portLabel.Text = "Port:";
-            // 
-            // _urlLabel
-            // 
-            this._urlLabel.AutoSize = true;
-            this._urlLabel.Location = new System.Drawing.Point(36, 132);
-            this._urlLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this._urlLabel.Name = "_urlLabel";
-            this._urlLabel.Size = new System.Drawing.Size(33, 20);
-            this._urlLabel.TabIndex = 2;
-            this._urlLabel.Text = "HostUrl:";
-            // 
             // _protocolTypeComboBox
             // 
             this._protocolTypeComboBox.FormattingEnabled = true;
-            this._protocolTypeComboBox.Location = new System.Drawing.Point(180, 86);
+            this._protocolTypeComboBox.Location = new System.Drawing.Point(233, 60);
             this._protocolTypeComboBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._protocolTypeComboBox.Name = "_protocolTypeComboBox";
             this._protocolTypeComboBox.Size = new System.Drawing.Size(280, 28);
             this._protocolTypeComboBox.TabIndex = 2;
+            this._protocolTypeComboBox.SelectedIndexChanged += new System.EventHandler(this._protocolTypeComboBox_SelectedIndexChanged);
             // 
             // _protocolTypeLabel
             // 
             this._protocolTypeLabel.AutoSize = true;
-            this._protocolTypeLabel.Location = new System.Drawing.Point(36, 91);
+            this._protocolTypeLabel.Location = new System.Drawing.Point(89, 65);
             this._protocolTypeLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this._protocolTypeLabel.Name = "_protocolTypeLabel";
             this._protocolTypeLabel.Size = new System.Drawing.Size(109, 20);
@@ -1153,6 +1167,8 @@
             this._templateRemoteInvoiveSettingsTabPage.ResumeLayout(false);
             this._remoteInvoiceMainPanel.ResumeLayout(false);
             this._remoteInvoiceMainPanel.PerformLayout();
+            this._remoteSettingsFieldPanel.ResumeLayout(false);
+            this._remoteSettingsFieldPanel.PerformLayout();
             this.panel1.ResumeLayout(false);
             this._templateSelectorPanel.ResumeLayout(false);
             this._templateSelectorListPanel.ResumeLayout(false);
@@ -1251,5 +1267,6 @@
         private System.Windows.Forms.TextBox _invoiceFilePrefixTextBox;
         private System.Windows.Forms.TextBox _remoteFolderTextbox;
         private System.Windows.Forms.Label _remoteFolderLabel;
+        private System.Windows.Forms.Panel _remoteSettingsFieldPanel;
     }
 }

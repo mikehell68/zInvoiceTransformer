@@ -1,58 +1,73 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using System;
 using System.IO;
+using LogThis;
 using zInvoiceTransformer.Comms;
+using ZinvoiceTransformer.XmlHelpers;
+using ZinvoiceTransformer.XmlModels;
 
 namespace zInvoiceTransformer
 {
     public partial class TemplateEditor : Form
     {
-        static XDocument _invoiceImportTemplates;
-        XElement _selectedTemplateForDisplay;
-        XElement _originalTemplate;
-        InvoiceTemplateModel _invoiceTemplateModel;
-        bool _isInitialLoad = true;
-        string _fieldTemplate =
-@"<Field FieldNameId="""" > 
-    <Delimited Position="""" />
-  </Field>";
+        InvoiceImportTemplatesTemplate _selectedTemplateClone;
+        InvoiceImportTemplatesTemplate _originalTemplate;
+        readonly InvoiceTemplateModel _invoiceTemplateModel;
         
-
         public TemplateEditor(InvoiceTemplateModel invoiceTemplateModel)
         {
             InitializeComponent();
             _invoiceTemplateModel = invoiceTemplateModel;
+            InitializeTemplateModels(_invoiceTemplateModel.SelectedTemplate.Id);
+            InitialiseBindings();
             _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
-            LoadTemplates();
-            _isInitialLoad = false;
+            PopulateTemplateListBox();
+            PopulateUiWithSelectedTemplateClone();
+            SetSelectedTemplate(_invoiceTemplateModel.SelectedTemplate.Id);
         }
 
-        private void LoadTemplates(string selectedTemplateId = null)
+        private void InitializeTemplateModels(int templateId)
         {
-            _invoiceImportTemplates = _invoiceTemplateModel.InvoiceImportTemplates;
+            _originalTemplate = _invoiceTemplateModel.GetTemplate(templateId);
+            CreateRemoteInvoiceSettingsElementIfRequired();
+            _selectedTemplateClone = AnyClone.Cloner.Clone(_originalTemplate);
+        }
 
-            var allTemplateListItems = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Select(x => new TemplateListItem { Id = x.Attribute("Id").Value, Name = x.Attribute("Name").Value, IsInUse = x.Attribute("Active").Value == "1" }).ToArray();
+        void InitialiseBindings()
+        {
+            _nameTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Name", false, DataSourceUpdateMode.Never));
+            _descriptionTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Description", false, DataSourceUpdateMode.Never));
+            _activeCheckBox.DataBindings.Add(new Binding("Checked", _selectedTemplateClone, "Active", false,
+                DataSourceUpdateMode.Never));
+            _sourceFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "SourceFolder", false, DataSourceUpdateMode.Never));
+            _outputFolderTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "OutputFolder", false, DataSourceUpdateMode.Never));
+            _fieldDelimiterTextBox.DataBindings.Add(new Binding("Text", _selectedTemplateClone, "Delimiter", false, DataSourceUpdateMode.Never));
+
+        }
+
+        private void PopulateTemplateListBox()
+        {
+            var allTemplateListItems = _invoiceTemplateModel.ImportTemplates.Templates.Select(x => new TemplateListItem { Id = x.Id.ToString(), Name = x.Name, IsInUse = x.Active}).ToArray();
             _templatesListBox.Items.Clear();
             _templatesListBox.Items.AddRange(allTemplateListItems);
+        }
 
-            if (string.IsNullOrEmpty(selectedTemplateId) && _invoiceTemplateModel.SelectedTemplate != null)
-                SelectedTemplateId = _invoiceTemplateModel.SelectedTemplate.Attribute("Id").Value;
-            else
-                SelectedTemplateId = selectedTemplateId;
+        void SetSelectedTemplate(int templateId)
+        {
+            _templatesListBox.SelectedItem = _templatesListBox.Items.OfType<TemplateListItem>()
+                .FirstOrDefault(ti => ti.Id == templateId.ToString());
         }
 
         void _templatesListBoxSelectionChanged(object sender, System.EventArgs e)
         {
-            if(!_isInitialLoad)
-                SaveSelectedTemplateEdits();
+            SaveUiChangesToSelectedTemplate();
             
-            if (!_isInitialLoad && SelectedTemplateHasEdits())
+            if (SelectedTemplateCloneHasEdits())
             {
                 var result = MessageBox.Show(this,
-                                string.Format("The selected template '{0}' has changed.\nSave changes?", _selectedTemplateForDisplay.Attribute("Name").Value),
+                    $"The selected template '{_selectedTemplateClone.Name}' has changed.\nSave changes?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
@@ -60,60 +75,57 @@ namespace zInvoiceTransformer
                 switch (result)
                 {
                     case DialogResult.Yes:
-                        _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
-                        SaveTemplates();
+                        SaveSelectedTemplateToTemplateList();
+                        SaveTemplatesToFile();
+                        InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
                         break;
                     case DialogResult.No:
-                        _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
+                        InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
                         break;
                     case DialogResult.Cancel:
                     default:
                         _templatesListBox.SelectedIndexChanged -= _templatesListBoxSelectionChanged;
-                        _templatesListBox.SelectedItem = _templatesListBox.Items.Cast<TemplateListItem>().First(t => t.Id.ToString() == _selectedTemplateForDisplay.Attribute("Id").Value);
+                        SetSelectedTemplate(_selectedTemplateClone.Id);
                         _templatesListBox.SelectedIndexChanged += _templatesListBoxSelectionChanged;
                         return;
                 }
+                PopulateTemplateListBox();
+                PopulateUiWithSelectedTemplateClone();
+                SetSelectedTemplate(_selectedTemplateClone.Id);
             }
             else
             {
-                _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templatesListBox.SelectedItem).Id);
+                InitializeTemplateModels(Convert.ToInt32(((TemplateListItem)_templatesListBox.SelectedItem).Id));
+                PopulateUiWithSelectedTemplateClone();
             }
-
-            LoadTemplate();
         }
 
-        private void LoadTemplate()
+        private void PopulateUiWithSelectedTemplateClone()
         {
             _templateFieldDefinitionsFlowLayoutPanel.SuspendLayout();
 
             _templateFieldDefinitionsFlowLayoutPanel.Controls.Clear();
 
-            if (_templatesListBox.SelectedItem != null)
+            if (_selectedTemplateClone != null)
             {
-                var item = (TemplateListItem)_templatesListBox.SelectedItem;
-
-                _originalTemplate = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").FirstOrDefault(x => x.Attribute("Id").Value == item.Id);
-                CreateRemoteInvoiceSettingsElementIfRequired();
-                _selectedTemplateForDisplay = new XElement(_originalTemplate);
-
-                _nameTextBox.Text = _selectedTemplateForDisplay.Attribute("Name").Value;
-                _descriptionTextBox.Text = _selectedTemplateForDisplay.Attribute("Description").Value;
-                _activeCheckBox.Checked = _selectedTemplateForDisplay.Attribute("Active").Value == "1";
-                _sourceFolderTextBox.Text = _selectedTemplateForDisplay.Attribute("SourceFolder").Value;
-                _outputFolderTextBox.Text = _selectedTemplateForDisplay.Attribute("OutputFolder").Value;
-                _fieldDelimiterTextBox.Text = _selectedTemplateForDisplay.Attribute("Delimiter").Value;
-                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateForDisplay.Attribute("LbProcessingType").Value);
-                _hasHeaderCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasHeaderRecord").Value == "1";
-                _hasMasterCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasMasterRecord").Value == "1";
-                _hasFooterCheckBox.Checked = _selectedTemplateForDisplay.Attribute("HasSummaryRecord").Value == "1";
-                _uomCaseSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMCase").Value;
-                _uomEachSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMEach").Value;
-                _uomWeightSymbolTextBox.Text = _selectedTemplateForDisplay.Attribute("UoMWeight").Value;
+                _nameTextBox.Text = _selectedTemplateClone.Name;
+                _descriptionTextBox.Text = _selectedTemplateClone.Description;
+                _activeCheckBox.Checked = _selectedTemplateClone.Active;
+                _sourceFolderTextBox.Text = _selectedTemplateClone.SourceFolder;
+                _outputFolderTextBox.Text = _selectedTemplateClone.OutputFolder;
+                _fieldDelimiterTextBox.Text = _selectedTemplateClone.Delimiter;
+                _lbProcessingTypeComboBox.SelectedIndex = SetWeightProcessingRule(_selectedTemplateClone.LbProcessingType.ToString());
+                _hasHeaderCheckBox.Checked = _selectedTemplateClone.HasHeaderRecord;
+                _hasMasterCheckBox.Checked = _selectedTemplateClone.HasMasterRecord;
+                _hasFooterCheckBox.Checked = _selectedTemplateClone.HasSummaryRecord;
+                _uomCaseSymbolTextBox.Text = _selectedTemplateClone.UoMCase;
+                _uomEachSymbolTextBox.Text = _selectedTemplateClone.UoMEach;
+                _uomWeightSymbolTextBox.Text = _selectedTemplateClone.UoMWeight;
 
                 if (_hasMasterCheckBox.Checked)
                 {
-                    _masterRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("MasterRow").Attribute("RecordTypeIdentifier").Value;
-                    _masterRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("MasterRow").Attribute("RecordTypePostion").Value);
+                    _masterRecordIdentifierTextBox.Text = _selectedTemplateClone.MasterRow.RecordTypeIdentifier;
+                    _masterRecordPositionNumericUpDown.Value = _selectedTemplateClone.MasterRow.RecordTypePostion;
                 }
                 else
                 {
@@ -121,13 +133,13 @@ namespace zInvoiceTransformer
                     _masterRecordPositionNumericUpDown.Value = -1;
                 }
 
-                _detailRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("DetailFields").Attribute("RecordTypeIdentifier").Value;
-                _detailRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("DetailFields").Attribute("RecordTypePostion").Value);
+                _detailRecordIdentifierTextBox.Text = _selectedTemplateClone.DetailFields.RecordTypeIdentifier;
+                _detailRecordPositionNumericUpDown.Value = _selectedTemplateClone.DetailFields.RecordTypePostion;
 
                 if (_hasFooterCheckBox.Checked)
                 {
-                    _footerRecordIdentifierTextBox.Text = _selectedTemplateForDisplay.Element("SummaryRow").Attribute("RecordTypeIdentifier").Value;
-                    _footerRecordPositionNumericUpDown.Value = int.Parse(_selectedTemplateForDisplay.Element("SummaryRow").Attribute("RecordTypePostion").Value);
+                    _footerRecordIdentifierTextBox.Text = _selectedTemplateClone.SummaryRow.RecordTypeIdentifier;
+                    _footerRecordPositionNumericUpDown.Value = _selectedTemplateClone.SummaryRow.RecordTypePostion;
                 }
                 else
                 {
@@ -135,7 +147,7 @@ namespace zInvoiceTransformer
                     _footerRecordPositionNumericUpDown.Value = -1;
                 }
 
-                var fieldNameDefinitions = _invoiceImportTemplates.Root.Element("Definitions").Element("FieldNames");
+                var fieldNameDefinitions = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.MasterRow));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.DetailFields));
                 _templateFieldDefinitionsFlowLayoutPanel.Controls.AddRange(CreateFieldDisplayItems(fieldNameDefinitions, FieldRecordLocation.SummaryRow));
@@ -144,28 +156,27 @@ namespace zInvoiceTransformer
                 //var noOfDetailFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.DetailFields);
                 //var noOfFooterFields = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>().Count(x => x.FieldLocation == FieldRecordLocation.SummaryRow);
 
-                var eachesConversionElement = _selectedTemplateForDisplay.Element("EachesConversion");
-                _useEachesConversionCheckbox.Checked = eachesConversionElement != null && eachesConversionElement.Attribute("enabled").Value == "1";
-                _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.Attribute("tag").Value : string.Empty;
+                var eachesConversionElement = _selectedTemplateClone.EachesConversion;
+                _useEachesConversionCheckbox.Checked = eachesConversionElement != null && eachesConversionElement.enabled == 1;
+                _eachesConversionTagTextBox.Text = eachesConversionElement != null ? eachesConversionElement.tag : string.Empty;
                 _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
                 
-                var transferProtocols = _invoiceImportTemplates.Root.Element("Definitions")
-                    .Element("RemoteTransferProtocolTypes")
-                    .Descendants("RemoteTransferProtocolType")
-                    .Select(el => new { id = Convert.ToInt32(el.Attribute("Id").Value), name = el.Attribute("Name").Value }).ToArray();
+                var transferProtocols = _invoiceTemplateModel.ImportTemplates.Definitions
+                    .RemoteTransferProtocolTypes
+                    .Select(el => new KeyValuePair<int, string>(Convert.ToInt32(el.Id), el.Name)).ToList();
 
                 _protocolTypeComboBox.DataSource = transferProtocols;
-                _protocolTypeComboBox.DisplayMember = "name";
-                _protocolTypeComboBox.ValueMember = "id";
-                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("RemoteTransferProtocolTypeId").Value);
+                _protocolTypeComboBox.DisplayMember = "value";
+                _protocolTypeComboBox.ValueMember = "key";
+                _protocolTypeComboBox.SelectedValue = Convert.ToInt32(_selectedTemplateClone.RemoteInvoiceSettings?.RemoteTransferProtocolTypeId);
 
-                _urlTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("url").Value;
-                _portTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("port").Value;
-                _usernameTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("username").Value;
-                _passwordTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("password").Value;
-                _keyfileLocationTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("keyfileLocation").Value;
-                _invoiceFilePrefixTextBox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("InvoiceFileCustomerPrefix").Value;
-                _remoteFolderTextbox.Text = _selectedTemplateForDisplay.Element("RemoteInvoiceSettings")?.Attribute("RemoteFolder").Value;
+                _urlTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.url;
+                _portTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.port.ToString();
+                _usernameTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.username;
+                _passwordTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.password;
+                _keyfileLocationTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.keyfileLocation;
+                _invoiceFilePrefixTextBox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.InvoiceFileCustomerPrefix;
+                _remoteFolderTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.RemoteFolder;
             }
 
             _templateFieldDefinitionsFlowLayoutPanel.ResumeLayout();
@@ -173,16 +184,18 @@ namespace zInvoiceTransformer
 
         private void CreateRemoteInvoiceSettingsElementIfRequired()
         {
-            if (_originalTemplate.Element("RemoteInvoiceSettings") == null)
-                _originalTemplate.Add(new XElement("RemoteInvoiceSettings",
-                    new XAttribute("RemoteTransferProtocolTypeId", 0),
-                    new XAttribute("url", ""),
-                    new XAttribute("port", 0),
-                    new XAttribute("username", ""),
-                    new XAttribute("password", ""),
-                    new XAttribute("keyfileLocation", ""),
-                    new XAttribute("RemoteFolder", ""),
-                    new XAttribute("InvoiceFileCustomerPrefix", "")));
+            if (_originalTemplate.RemoteInvoiceSettings == null)
+                _originalTemplate.RemoteInvoiceSettings = new InvoiceImportTemplatesTemplateRemoteInvoiceSettings
+                {
+                    InvoiceFileCustomerPrefix = "", 
+                    keyfileLocation = "", 
+                    password = "", 
+                    port = 0, 
+                    RemoteFolder = "",
+                    RemoteTransferProtocolTypeId = 0, 
+                    url = "", 
+                    username = ""
+                };
         }
 
         private int SetWeightProcessingRule(string weightProcessingRule)
@@ -217,40 +230,88 @@ namespace zInvoiceTransformer
             }
         }
 
-        private TemplateFieldDefinition[] CreateFieldDisplayItems(XElement fieldNameDefinitions, FieldRecordLocation fieldRecordLocation)
+        private TemplateFieldDefinition[] CreateFieldDisplayItems(InvoiceImportTemplatesDefinitionsFieldName[] fieldNameDefinitions, FieldRecordLocation fieldRecordLocation)
         {
             var templateFieldDefinitions = new List<TemplateFieldDefinition>();
 
-            foreach (var fieldElement in _selectedTemplateForDisplay.Element(fieldRecordLocation.ToString()).Descendants("Field"))
+            switch (fieldRecordLocation)
             {
-                XElement field = fieldElement;
-                var fieldName = fieldNameDefinitions.Descendants("FieldName").Where(f => f.Attribute("Id").Value == field.Attribute("FieldNameId").Value).FirstOrDefault();
+                case FieldRecordLocation.MasterRow:
+                    if (_selectedTemplateClone.MasterRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.MasterRow.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
 
-                int? directiveId = null;
-                if(field.Attribute("DirectiveId") != null)
-                    directiveId = int.Parse(field.Attribute("DirectiveId").Value);
-                                
-                templateFieldDefinitions.Add(new TemplateFieldDefinition(fieldName.Attribute("Name").Value,
-                                                                         int.Parse(fieldName.Attribute("Id").Value),
-                                                                         int.Parse(field.Element("Delimited").Attribute("Position").Value), 
-                                                                         (int)fieldRecordLocation,
-                                                                         directiveId));
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+                
+                case FieldRecordLocation.DetailFields:
+                    if (_selectedTemplateClone.DetailFields.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.DetailFields.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
+
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+
+                case FieldRecordLocation.SummaryRow:
+                    if (_selectedTemplateClone.SummaryRow.Field != null)
+                        foreach (var fieldElement in _selectedTemplateClone.SummaryRow.Field)
+                        {
+                            var field = fieldElement;
+                            var fieldName = fieldNameDefinitions.FirstOrDefault(f => f.Id == field.FieldNameId);
+                            int? directiveId = field.DirectiveIdSpecified ? field.DirectiveId : (int?) null;
+
+                            templateFieldDefinitions.Add(new TemplateFieldDefinition(
+                                fieldName.Name,
+                                fieldName.Id,
+                                field.Delimited.Position,
+                                (int) fieldRecordLocation,
+                                directiveId));
+                        }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(fieldRecordLocation), fieldRecordLocation, null);
             }
+            
             return templateFieldDefinitions.ToArray();
         }
-
-        private void SaveTemplates()
+        
+        private void SaveTemplatesToFile()
         {
-            _originalTemplate.ReplaceWith(_selectedTemplateForDisplay);
-            _invoiceImportTemplates.Save(InvoiceTemplateModel.InvoiceImportTemplatePath);
-            _isInitialLoad = true;
-            LoadTemplates();
-            _isInitialLoad = false;
+            _invoiceTemplateModel.ImportTemplates.Save<InvoiceImportTemplates>(InvoiceTemplateModel.InvoiceImportTemplatePath);
+        }
+
+        private void SaveSelectedTemplateToTemplateList()
+        {
+            var templateToUpdateIndex = _invoiceTemplateModel.ImportTemplates.Templates.ToList()
+                .IndexOf(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault(t => t.Id == _selectedTemplateClone.Id));
+
+            _invoiceTemplateModel.ImportTemplates.Templates[templateToUpdateIndex] = _selectedTemplateClone;
         }
 
         private void _closeButton_Click(object sender, System.EventArgs e)
         {
-            SaveSelectedTemplateEdits();
+            SaveUiChangesToSelectedTemplate();
             Close();
         }
 
@@ -260,11 +321,16 @@ namespace zInvoiceTransformer
             {
                 var item = (TemplateListItem)_templatesListBox.SelectedItem;
 
-                if(MessageBox.Show(this, string.Format("Delete selected template '{0}'", item.Name), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if(MessageBox.Show(this, $"Delete selected template '{item.Name}'", Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Where(x => x.Attribute("Id").Value == item.Id).FirstOrDefault().Remove();
-                    SaveTemplates();
-                    LoadTemplates();
+                    var templates = _invoiceTemplateModel.ImportTemplates.Templates.ToList();
+                    templates.RemoveAll(t => t.Id == _selectedTemplateClone.Id);
+                    _invoiceTemplateModel.ImportTemplates.Templates = templates.ToArray();
+                    SaveTemplatesToFile();
+                    InitializeTemplateModels(_invoiceTemplateModel.ImportTemplates.Templates.FirstOrDefault().Id);
+                    PopulateTemplateListBox();
+                    PopulateUiWithSelectedTemplateClone();
+                    SetSelectedTemplate(_selectedTemplateClone.Id);
                 }
             }
             else
@@ -285,103 +351,157 @@ namespace zInvoiceTransformer
 
         private void _testRemoteTransferProtocolButton_Click(object sender, System.EventArgs e)
         {
-            // TODO: Hook up server connection
-            //_invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
-            var rc = RemoteConnectionFactory.Build((int)_protocolTypeComboBox.SelectedValue);
-            rc.RemoteConnectionInfo = _invoiceTemplateModel.GetSelectedTemplateConnectionInfo();
-            var connected = rc.CheckConnection();
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                SaveUiChangesToSelectedTemplate();
 
-            MessageBox.Show(this,$"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"), "Test Connection", MessageBoxButtons.OK);
+                var rc = RemoteConnectionFactory.Build((int) _protocolTypeComboBox.SelectedValue);
+                rc.RemoteConnectionInfo = GetSelectedTemplateConnectionInfo();
+                var connected = rc.CheckConnection();
+
+                MessageBox.Show(this, $"Connection to {_urlTextbox.Text}: " + (connected ? "ok" : "failed"),
+                    "Test Connection", MessageBoxButtons.OK);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.LogThis(ex.Message + '\n' + ex.StackTrace, eloglevel.error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
         }
 
         private void _saveButton_Click(object sender, System.EventArgs e)
         {
-            if (_selectedTemplateForDisplay == null)
+            if (_selectedTemplateClone == null)
                 return;
 
-            SaveSelectedTemplateEdits();
-            if (SelectedTemplateHasEdits())
+            SaveUiChangesToSelectedTemplate();
+            if (SelectedTemplateCloneHasEdits())
             {
-                SaveTemplates();
+                SaveSelectedTemplateToTemplateList();
+                SaveTemplatesToFile();
+                InitializeTemplateModels(_selectedTemplateClone.Id);
             }
         }
 
-        private void SaveSelectedTemplateEdits()
+        private void SaveUiChangesToSelectedTemplate()
         {
-            if (_selectedTemplateForDisplay == null)
+            if (_selectedTemplateClone == null)
                 return;
 
-            _selectedTemplateForDisplay.Attribute("Name").Value = _nameTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Description").Value = _descriptionTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Active").Value = _activeCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Attribute("SourceFolder").Value = _sourceFolderTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("OutputFolder").Value = _outputFolderTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("Delimiter").Value = _fieldDelimiterTextBox.Text;
-            _selectedTemplateForDisplay.Attribute("LbProcessingType").Value = GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex);
-            _selectedTemplateForDisplay.Attribute("HasHeaderRecord").Value = _hasHeaderCheckBox.Checked ? "1" : "0";
+            _selectedTemplateClone.Name = _nameTextBox.Text;
+            _selectedTemplateClone.Description = _descriptionTextBox.Text;
+            _selectedTemplateClone.Active = _activeCheckBox.Checked;
+            _selectedTemplateClone.SourceFolder = _sourceFolderTextBox.Text;
+            _selectedTemplateClone.OutputFolder = _outputFolderTextBox.Text;
+            _selectedTemplateClone.Delimiter = _fieldDelimiterTextBox.Text;
+            _selectedTemplateClone.LbProcessingType = Convert.ToByte(GetWeightProcessingRule(_lbProcessingTypeComboBox.SelectedIndex));
+            _selectedTemplateClone.HasHeaderRecord = _hasHeaderCheckBox.Checked;
 
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("RemoteTransferProtocolTypeId", _protocolTypeComboBox.SelectedValue);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("url", _urlTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("port", _portTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("username", _usernameTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("password", _passwordTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("keyfileLocation", _keyfileLocationTextbox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("InvoiceFileCustomerPrefix", _invoiceFilePrefixTextBox.Text);
-            _selectedTemplateForDisplay.Element("RemoteInvoiceSettings").SetAttributeValue("RemoteFolder", _remoteFolderTextbox.Text);
+            _selectedTemplateClone.RemoteInvoiceSettings.RemoteTransferProtocolTypeId = Convert.ToByte(_protocolTypeComboBox.SelectedValue);
+            _selectedTemplateClone.RemoteInvoiceSettings.url = _urlTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.port = Convert.ToInt32(string.IsNullOrEmpty(_portTextbox.Text) ? "0" : _portTextbox.Text) ;
+            _selectedTemplateClone.RemoteInvoiceSettings.username = _usernameTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.password = _passwordTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.keyfileLocation = _keyfileLocationTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.InvoiceFileCustomerPrefix = _invoiceFilePrefixTextBox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder = _remoteFolderTextbox.Text;
 
-            _selectedTemplateForDisplay.Attribute("HasMasterRecord").Value = _hasMasterCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypePostion", _masterRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("MasterRow").SetAttributeValue("RecordTypeIdentifier", _masterRecordIdentifierTextBox.Text);
+            _selectedTemplateClone.HasMasterRecord =_hasMasterCheckBox.Checked;
+            _selectedTemplateClone.MasterRow.RecordTypePostion = (sbyte)_masterRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.MasterRow.RecordTypeIdentifier = _masterRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.Attribute("HasSummaryRecord").Value = _hasFooterCheckBox.Checked ? "1" : "0";
-            _selectedTemplateForDisplay.Element("SummaryRow").SetAttributeValue("RecordTypePostion", _footerRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("SummaryRow").SetAttributeValue("RecordTypeIdentifier", _footerRecordIdentifierTextBox.Text);
+            _selectedTemplateClone.HasSummaryRecord = _hasFooterCheckBox.Checked;
+            _selectedTemplateClone.SummaryRow.RecordTypePostion = (sbyte)_footerRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.SummaryRow.RecordTypeIdentifier = _footerRecordIdentifierTextBox.Text;
 
-            _selectedTemplateForDisplay.Element("DetailFields").SetAttributeValue("RecordTypePostion", _detailRecordPositionNumericUpDown.Value);
-            _selectedTemplateForDisplay.Element("DetailFields").SetAttributeValue("RecordTypeIdentifier", _detailRecordIdentifierTextBox.Text);
+            _selectedTemplateClone.DetailFields.RecordTypePostion = (sbyte)_detailRecordPositionNumericUpDown.Value;
+            _selectedTemplateClone.DetailFields.RecordTypeIdentifier = _detailRecordIdentifierTextBox.Text;
 
-
-            _selectedTemplateForDisplay.Element("MasterRow").RemoveNodes();
-            _selectedTemplateForDisplay.Element("DetailFields").RemoveNodes();
-            _selectedTemplateForDisplay.Element("SummaryRow").RemoveNodes();
-
-            if (_selectedTemplateForDisplay.Elements().FirstOrDefault(e => e.Name == "EachesConversion") == null)
+            if (_selectedTemplateClone.EachesConversion == null)
             {
-                XElement element = new XElement("EachesConversion");
-                element.Add(new XAttribute("enabled", "0"));
-                element.Add(new XAttribute("tag", "*"));
-                _selectedTemplateForDisplay.Add(element);
+                _selectedTemplateClone.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
+                {
+                    enabled = 0,
+                    tag = "*"
+                };
             }
-            _selectedTemplateForDisplay.Element("EachesConversion").SetAttributeValue("enabled", _useEachesConversionCheckbox.Checked ? "1" : "0");
-            _selectedTemplateForDisplay.Element("EachesConversion").SetAttributeValue("tag", _eachesConversionTagTextBox.Text);
+            _selectedTemplateClone.EachesConversion.enabled = (byte)(_useEachesConversionCheckbox.Checked ? 1 : 0);
+            _selectedTemplateClone.EachesConversion.tag = _eachesConversionTagTextBox.Text;
 
-            XElement el;
+            var masterFieldList = new List<InvoiceImportTemplatesTemplateMasterRowField>();
+            var detailFieldList = new List<InvoiceImportTemplatesTemplateDetailFieldsField>();
+            var summaryFieldList = new List<InvoiceImportTemplatesTemplateSummaryRowField>();
 
-            var fieldDefs = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
-            foreach (var field in fieldDefs)
+            var fieldDefinitions = _templateFieldDefinitionsFlowLayoutPanel.Controls.OfType<TemplateFieldDefinition>();
+            foreach (var field in fieldDefinitions)
             {
-                el = XElement.Parse(_fieldTemplate);
-                el.Attribute("FieldNameId").SetValue(field.FieldNameId);
+                switch (field.FieldLocation)
+                {
+                    case FieldRecordLocation.MasterRow:
+                        var masterField = _selectedTemplateClone.MasterRow.Field?.ToList()
+                                      .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ?? 
+                                      new InvoiceImportTemplatesTemplateMasterRowField
+                                      {
+                                          Delimited = new InvoiceImportTemplatesTemplateMasterRowFieldDelimited()
+                                      };
 
-                if (field.DirectiveId != null)
-                    el.Add(new XAttribute("DirectiveId", field.DirectiveId));
+                        masterField.FieldNameId = (byte)field.FieldNameId;
+                        masterField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        masterField.Delimited.Position = (byte)field.FieldPosition;
 
-                el.Element("Delimited").Attribute("Position").SetValue(field.FieldPosition);
-
-                _selectedTemplateForDisplay.Element(field.FieldLocation.ToString()).Add(new XElement(el));
+                        masterFieldList.Add(masterField);
+                        
+           
+                        break;
+                    
+                    case FieldRecordLocation.DetailFields:
+                        
+                        var detailField = _selectedTemplateClone.DetailFields.Field?.ToList()
+                                      .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ??
+                                  new InvoiceImportTemplatesTemplateDetailFieldsField
+                                  {
+                                      Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited()
+                                  };
+                        detailField.FieldNameId = (byte)field.FieldNameId;
+                        detailField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        detailField.Delimited.Position = (byte)field.FieldPosition;
+                        detailFieldList.Add(detailField);
+                        break;
+                    
+                    case FieldRecordLocation.SummaryRow:
+                        
+                        var summaryField = _selectedTemplateClone.SummaryRow.Field?.ToList()
+                                       .FirstOrDefault(f => f.FieldNameId == field.FieldNameId) ??
+                                   new InvoiceImportTemplatesTemplateSummaryRowField
+                                   {
+                                       Delimited = new InvoiceImportTemplatesTemplateSummaryRowFieldDelimited()
+                                   };
+                        summaryField.FieldNameId = (byte)field.FieldNameId;
+                        summaryField.DirectiveId = (byte)(field.DirectiveId ?? new byte());
+                        summaryField.Delimited.Position = (byte)field.FieldPosition;
+                        
+                        summaryFieldList.Add(summaryField);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
+            _selectedTemplateClone.MasterRow.Field = masterFieldList.Any() ? masterFieldList.ToArray() : null;
+            _selectedTemplateClone.DetailFields.Field = detailFieldList.Any() ? detailFieldList.ToArray() : null;
+            _selectedTemplateClone.SummaryRow.Field = summaryFieldList.Any() ? summaryFieldList.ToArray() : null;
         }
 
-        private bool SelectedTemplateHasEdits()
+        private bool SelectedTemplateCloneHasEdits()
         {
-            //_originalTemplate = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").
-            //                        Where(x => x.Attribute("Id").Value == _selectedTemplateForDisplay.Attribute("Id").Value).FirstOrDefault();
+            if(_selectedTemplateClone == null )
+                return false;
 
-            if (!XNode.DeepEquals(_originalTemplate, _selectedTemplateForDisplay))
-            {
-                return true;
-            }
-            return false;
+            return AnyDiff.AnyDiff.Diff(_originalTemplate, _selectedTemplateClone).Count > 0;
         }
 
         private void _sourceFolderButton_Click(object sender, System.EventArgs e)
@@ -398,22 +518,6 @@ namespace zInvoiceTransformer
                 _outputFolderTextBox.Text = _folderDialog.SelectedPath;
         }
 
-        public string SelectedTemplateId
-        {
-            set
-            {
-                foreach (var item in _templatesListBox.Items)
-                {
-                    var it = (TemplateListItem)item;
-                    if (it.Id == value)
-                    {
-                        _templatesListBox.SelectedItem = it;
-                        break;
-                    }
-                }
-            }
-        }
-
         private void _hasMasterCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             _masterRecordIdentifierTextBox.Enabled = _masterRecordPositionNumericUpDown.Enabled = _hasMasterCheckBox.Checked;
@@ -426,45 +530,81 @@ namespace zInvoiceTransformer
 
         private void _newTemplate_Click(object sender, EventArgs e)
         {
-            var newTemplate = new XElement(_invoiceImportTemplates.Root.Element("Templates").Descendants("Template").First());
-            int maxId = _invoiceImportTemplates.Root.Element("Templates").Descendants("Template").Max(x => int.Parse(x.Attribute("Id").Value));
+            SaveUiChangesToSelectedTemplate();
+            if(SelectedTemplateCloneHasEdits())
+                _templatesListBoxSelectionChanged(sender, e);
 
-            newTemplate.Attribute("Id").SetValue(maxId + 1);
-            newTemplate.Attribute("Name").SetValue("New Template");
-            newTemplate.Attribute("SourceFolder").SetValue("");
-            newTemplate.Attribute("OutputFolder").SetValue(""); ;
-            newTemplate.Attribute("Delimiter").SetValue(","); ;
-            newTemplate.Attribute("LbProcessingType").SetValue("3");
-            newTemplate.Attribute("HasHeaderRecord").SetValue("0");
-            newTemplate.Attribute("HasMasterRecord").SetValue("0");
-            newTemplate.Attribute("HasSummaryRecord").SetValue("0"); ;
+            var newTemplate = new InvoiceImportTemplatesTemplate();
+            int maxId = _invoiceTemplateModel.ImportTemplates.Templates.Max(x => x.Id);
 
-            newTemplate.Element("MasterRow").RemoveNodes();
-            newTemplate.Element("DetailFields").RemoveNodes();
-            newTemplate.Element("SummaryRow").RemoveNodes();
-
-            XElement el = XElement.Parse(_fieldTemplate);
-
-            var fieldDefs = _invoiceImportTemplates.Root.Element("Definitions").Element("FieldNames").Descendants("FieldName");
-            foreach (var field in fieldDefs)
+            newTemplate.Id = (byte) (maxId + 1);
+            newTemplate.Name = $"New Template {newTemplate.Id}";
+            newTemplate.Description = "";
+            newTemplate.SourceFolder = "";
+            newTemplate.OutputFolder = "";
+            newTemplate.Delimiter = ",";
+            newTemplate.LbProcessingType = 3;
+            newTemplate.HasHeaderRecord = false;
+            newTemplate.HasMasterRecord = false;
+            newTemplate.HasSummaryRecord = false;
+            newTemplate.EachesConversion = new InvoiceImportTemplatesTemplateEachesConversion
             {
-                el.Attribute("FieldNameId").SetValue(field.Attribute("Id").Value);
-                el.Element("Delimited").Attribute("Position").SetValue("0");
+                enabled = 0, tag = "*"
+            };
 
-                newTemplate.Element(FieldRecordLocation.DetailFields.ToString()).Add(new XElement(el));
+            newTemplate.MasterRow = new InvoiceImportTemplatesTemplateMasterRow
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                //Field = new InvoiceImportTemplatesTemplateMasterRowField[] { }
+            };
+
+            newTemplate.DetailFields = new InvoiceImportTemplatesTemplateDetailFields
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                Field = new InvoiceImportTemplatesTemplateDetailFieldsField[] { }
+            };
+
+            newTemplate.SummaryRow = new InvoiceImportTemplatesTemplateSummaryRow
+            {
+                RecordTypeIdentifier = "",
+                RecordTypePostion = -1,
+                //Field = new InvoiceImportTemplatesTemplateSummaryRowField[] { }
+            };
+
+            // create all invoice definition fields as 'detail' rows
+            var detailFields = new List<InvoiceImportTemplatesTemplateDetailFieldsField>();
+            var invoiceFieldDefinitions = _invoiceTemplateModel.ImportTemplates.Definitions.FieldNames;
+            foreach (var definitionField in invoiceFieldDefinitions)
+            {
+                var detailField = new InvoiceImportTemplatesTemplateDetailFieldsField
+                {
+                    Delimited = new InvoiceImportTemplatesTemplateDetailFieldsFieldDelimited { Position = 0 },
+                    FieldNameId = definitionField.Id
+                };
+                detailFields.Add(detailField);
+                
             }
+            newTemplate.DetailFields.Field = detailFields.ToArray();
 
-            _invoiceImportTemplates.Root.Element("Templates").Add(newTemplate);
-            SaveTemplates();
-            LoadTemplates();
+            var templateList = _invoiceTemplateModel.ImportTemplates.Templates.ToList();
+            templateList.Add(newTemplate);
+            _invoiceTemplateModel.ImportTemplates.Templates = templateList.ToArray();
+            
+            SaveTemplatesToFile();
+            InitializeTemplateModels(newTemplate.Id);
+            PopulateTemplateListBox();
+            PopulateUiWithSelectedTemplateClone();
+            SetSelectedTemplate(newTemplate.Id);
         }
 
         private void TemplateEditor_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (SelectedTemplateHasEdits())
+            if (SelectedTemplateCloneHasEdits())
             {
                 var result = MessageBox.Show(this,
-                                string.Format("The selected template '{0}' has changed.\nSave changes before closing?", _selectedTemplateForDisplay.Attribute("Name").Value),
+                    $"The selected template '{_selectedTemplateClone.Name}' has changed.\nSave changes before closing?",
                                 Text,
                                 MessageBoxButtons.YesNoCancel,
                                 MessageBoxIcon.Question);
@@ -472,7 +612,7 @@ namespace zInvoiceTransformer
                 switch (result)
                 {
                     case DialogResult.Yes:
-                        SaveTemplates();
+                        SaveTemplatesToFile();
                         break;
                     case DialogResult.No:
                         break;
@@ -486,6 +626,36 @@ namespace zInvoiceTransformer
         private void _useEachesConversionCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             _eachesConversionTagTextBox.Enabled = _useEachesConversionCheckbox.Checked;
+        }
+        public RemoteInvoiceConnectionInfo GetSelectedTemplateConnectionInfo()
+        {
+            try
+            {
+                if (_selectedTemplateClone != null)
+                    return new RemoteInvoiceConnectionInfo
+                    {
+                        DestinationFolder = _selectedTemplateClone.SourceFolder,
+                        InvoiceFilePrefix = _selectedTemplateClone.RemoteInvoiceSettings.InvoiceFileCustomerPrefix,
+                        HostUrl = _selectedTemplateClone.RemoteInvoiceSettings.url,
+                        Port = _selectedTemplateClone.RemoteInvoiceSettings.port,
+                        Username = _selectedTemplateClone.RemoteInvoiceSettings.username,
+                        Password = _selectedTemplateClone.RemoteInvoiceSettings.password,
+                        RemoteFolder = _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder
+                    };
+
+                Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);
+                return null;
+            }
+            catch (Exception e)
+            {
+                Log.LogThis($"Unable to create RemoteInvoiceConnectionInfo, check invoice template: {e.Message}", eloglevel.error);
+                return null;
+            }
+        }
+
+        private void _protocolTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _remoteSettingsFieldPanel.Enabled = ((KeyValuePair<int, string>)_protocolTypeComboBox.SelectedItem).Key > 0;
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using LogThis;
 using Renci.SshNet.Sftp;
 using zInvoiceTransformer.Comms;
 
@@ -65,24 +66,40 @@ namespace zInvoiceTransformer
 
         void ConnectAndGetFileList()
         {
-            _getFilesBackgroundWorker.ReportProgress(20, "Checking Connection");
-
-            if (_clientTransferProtocol.CheckConnection())
+            try
             {
-                _getFilesBackgroundWorker.ReportProgress(50, "Fetching remote file names");
-                _fileList = _clientTransferProtocol.GetFileList();
+                _getFilesBackgroundWorker.ReportProgress(20, "Checking Connection");
+
+                if (_clientTransferProtocol.CheckConnection())
+                {
+                    _getFilesBackgroundWorker.ReportProgress(50, "Fetching remote file names");
+                    _fileList = _clientTransferProtocol.GetFileList();
+                }
+
+                _getFilesBackgroundWorker.ReportProgress(75, "Fetching remote file names - complete");
+                _totalBytesToDownload = _fileList.Sum(f => f.Length);
             }
-            
-            _getFilesBackgroundWorker.ReportProgress(75, "Fetching remote file names - complete");
-            _totalBytesToDownload = _fileList.Sum(f => f.Length);
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.LogThis(ex.Message + '\n' + ex.StackTrace, eloglevel.error);
+            }
         }
 
         void ConnectAndDownloadSelectedFiles(List<SftpFile> selectedFiles)
         {
-            _downloadFilesBackgroundWorker.ReportProgress(0, "Checking Connection");
-            if (_clientTransferProtocol.CheckConnection())
+            try
             {
-                _clientTransferProtocol.DownloadFiles(selectedFiles, progress => UpdateProgressBar(progress));
+                _downloadFilesBackgroundWorker.ReportProgress(0, "Checking Connection");
+                if (_clientTransferProtocol.CheckConnection())
+                {
+                    _clientTransferProtocol.DownloadFiles(selectedFiles, progress => UpdateProgressBar(progress));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log.LogThis(ex.Message + '\n' + ex.StackTrace, eloglevel.error);
             }
         }
 

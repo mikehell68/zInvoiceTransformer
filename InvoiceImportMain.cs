@@ -1,12 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows.Forms;
 using System.Diagnostics;
 using LogThis;
 using System.IO;
+using System.Linq;
 using zInvoiceTransformer.Comms;
-using zInvoiceTransformer.Properties;
+using ZinvoiceTransformer.Properties;
 
 namespace zInvoiceTransformer
 {
@@ -38,75 +38,68 @@ namespace zInvoiceTransformer
 
         void InvoiceTransformer_Load(object sender, EventArgs e)
         {
-
-            _nameTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateName", false, DataSourceUpdateMode.Never));
-            _descriptionTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateDescription", false, DataSourceUpdateMode.Never));
-            
-            LoadAndDisplayTemplates();
+            BindControls();
+            LoadAndDisplayTemplates(null);
         }
 
-        private void LoadAndDisplayTemplates()
+        void BindControls()
+        {
+            _nameTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateName", false,
+                DataSourceUpdateMode.Never));
+            _descriptionTextBox.DataBindings.Add(new Binding("Text", _invoiceTemplateModel, "SelectedTemplateDescription",
+                false, DataSourceUpdateMode.Never));
+        }
+
+        private void LoadAndDisplayTemplates(int? templateId)
         {
             _invoiceTemplateModel.LoadTemplates();
             _templateSelectorListBox.Items.Clear();
             _invoiceFilesListBox.Items.Clear();
             
             _templateSelectorListBox.Items.AddRange(GetListItemsForActiveTemplates());
-            _templateSelectorListBox.SetSelected(0, true);
+
+            if (templateId == null)
+                _templateSelectorListBox.SelectedIndex = 0;
+            else
+                _templateSelectorListBox.SelectedItem = _templateSelectorListBox.
+                    Items.OfType<TemplateListItem>().
+                    FirstOrDefault(ti => ti.Id == templateId.ToString());
+
+            //_templateSelectorListBox.SetSelected(0, true);
         }
 
         private static TemplateListItem[] GetListItemsForActiveTemplates()
         {
-            return
-                _invoiceTemplateModel.GetAllActiveTemplates().Select(
-                    template => new TemplateListItem
-                        {
-                            Id = template.Attribute("Id").Value,
-                            Name = template.Attribute("Name").Value,
-                            IsInUse = template.Attribute("Active").Value == "1"
-                        }).ToArray();
+            return _invoiceTemplateModel.GetAllTemplatesArray();
         }
                 
         void OnSelectedTemplateChanged(object sender, EventArgs e)
         {
             if (_templateSelectorListBox.SelectedItem != null)
             {
-                _invoiceTemplateModel.SelectedTemplate = _invoiceTemplateModel.GetTemplate(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id);
-
-                _invoiceFilesListBox.Items.Clear();
-
-                var fileList = _invoiceTemplateModel.GetSelectedTemplateImportFiles();
-
-                if (fileList != null)
-                    _invoiceFilesListBox.Items.AddRange(fileList);
-                else
-                {
-                    if( MessageBox.Show(
-                            this, 
-                            "Could not find invoice source folder: " + '\n' +
-                            _invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value + 
-                            '\n' + "Do you want to create the folder now?",
-                            Resources.AppNameText, 
-                            MessageBoxButtons.YesNoCancel, 
-                            MessageBoxIcon.Warning)  == DialogResult.Yes )
-                    {
-                        Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.Attribute("SourceFolder").Value);
-                    }
-                }
+                _invoiceTemplateModel.SetSelectedTemplate(Convert.ToByte(((TemplateListItem)_templateSelectorListBox.SelectedItem).Id));
+                CheckWorkingFolders();
+                RefreshFileList();
             }
         }
 
         static void StartZonalImportApp()
         {
-            Log.LogThis("Starting Invoice Import Appliction", eloglevel.info);
+            Log.LogThis("Starting Invoice Import Application", eloglevel.info);
+            Log.LogThis($"Invoice Import Application location: '{_invoiceTemplateModel.ImportAppLocation}'", eloglevel.info);
 
-            var invoiceImportProcess = new Process();
+            var invoiceImportProcess = new Process
+            {
+                StartInfo =
+                {
+                    UseShellExecute = true, 
+                    FileName = _invoiceTemplateModel.ImportAppLocation
+                }
+            };
 
-            invoiceImportProcess.StartInfo.UseShellExecute = true;
-            invoiceImportProcess.StartInfo.FileName = _invoiceTemplateModel.ImportAppLocation;
             invoiceImportProcess.Start();
             invoiceImportProcess.WaitForExit();
-            Log.LogThis("Invoice Import Appliction closed", eloglevel.info);
+            Log.LogThis("Invoice Import Application closed", eloglevel.info);
         }
 
         private void TransformBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -118,10 +111,10 @@ namespace zInvoiceTransformer
             try
             {
                 // could return an info object with transform details instead of just an int
-                TransformResultInfo transformResultInfo = _invoiceTemplateModel.DoTransform();
+                var transformResultInfo = _invoiceTemplateModel.DoTransform();
                 if (transformResultInfo.NumberOfInvoiceLinesProcessed > 0)
                 {
-                    _infoMsg = string.Format("{0} invoice lines processed", transformResultInfo.NumberOfInvoiceLinesProcessed);
+                    _infoMsg = $"{transformResultInfo.NumberOfInvoiceLinesProcessed} invoice lines processed";
                     _transformBackgroundWorker.ReportProgress(25);
                 }
                 else
@@ -133,7 +126,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred during transform stage: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred during transform stage: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured performing the invoice transfrom";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -150,7 +143,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred updating supplier name in Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred updating supplier name in Aztec: {ex}", eloglevel.error);
                 _errorMsg = "An error occured updating suplier name in Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -159,12 +152,11 @@ namespace zInvoiceTransformer
             try
             {
                 _invoiceTemplateModel.UpdateInvoiceImportFieldDefinitions(_invoiceTemplateModel.SelectedTemplate);
-                //WriteTransformValuesToAztec(_invoiceTemplateModel.SelectedTemplate);
                 _transformBackgroundWorker.ReportProgress(75);
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred writing field definitions to Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred writing field definitions to Aztec: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured writing field definitions to Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -177,7 +169,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred updating PurSysVar.ImportDir in Aztec: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred updating PurSysVar.ImportDir in Aztec: {ex}", eloglevel.error);
                 _errorMsg = "An error occured updating PurSysVar.ImportDir in Aztec";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -190,7 +182,7 @@ namespace zInvoiceTransformer
             }
             catch (Exception ex)
             {
-                Log.LogThis(string.Format("An exception occurred starting the Invoice Import application: {0}", ex), eloglevel.error);
+                Log.LogThis($"An exception occurred starting the Invoice Import application: {ex}", eloglevel.error);
                 _errorMsg =  "An error occured while starting the Invoice Import application";
                 _transformBackgroundWorker.ReportProgress(0);
                 return;
@@ -216,11 +208,18 @@ namespace zInvoiceTransformer
                                     Resources.AppNameText, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            LoadAndDisplayTemplates();
+            //LoadAndDisplayTemplates();
+            RefreshFileList();
         }
 
         private void OnDoTransformAndImportClick(object sender, EventArgs e)
         {
+            if (!CheckWorkingFolders())
+            {
+                MessageBox.Show(this, "Cannot run import.\nApplication folders are not valid", Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             _errorMsg = "";
             if (_invoiceTemplateModel.SelectedTemplate == null)
             {
@@ -258,14 +257,13 @@ namespace zInvoiceTransformer
         {
             var templateEditor = new TemplateEditor(_invoiceTemplateModel);
             templateEditor.ShowDialog(this);
-            LoadAndDisplayTemplates();
+            LoadAndDisplayTemplates(_invoiceTemplateModel.SelectedTemplate.Id);
         }
 
         private void OnImportApSettingsClick(object sender, EventArgs e)
         {
             var importAppSettings = new ImportApplicationConfigurationForm(_invoiceTemplateModel);
             importAppSettings.ShowDialog(this);
-            //LoadAndDisplayTemplates();
         }
 
         private static void OnCloseClick(object sender, EventArgs e)
@@ -282,7 +280,74 @@ namespace zInvoiceTransformer
             {
                 var fileDownloadDialog = new RemoteDownloadDialog(_invoiceTemplateModel, _clientTransferProtocol);
                 fileDownloadDialog.ShowDialog(this);
+                RefreshFileList();
             }
+        }
+
+        private void RefreshFileList()
+        {
+            _invoiceFilesListBox.Items.Clear();
+
+            var fileList = _invoiceTemplateModel.GetSelectedTemplateImportFiles();
+
+            if (fileList != null)
+                _invoiceFilesListBox.Items.AddRange(fileList);
+        }
+
+        bool CheckWorkingFolders()
+        {
+            var result = true;
+
+            if (!Directory.Exists(_invoiceTemplateModel.SelectedTemplate.SourceFolder))
+            {
+                if (ShowFolderNotFoundDialog("source", _invoiceTemplateModel.SelectedTemplate.SourceFolder) ==
+                    DialogResult.Yes)
+                {
+                    Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.SourceFolder);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            if (!Directory.Exists(_invoiceTemplateModel.SelectedTemplate.OutputFolder))
+            {
+                if (ShowFolderNotFoundDialog("output", _invoiceTemplateModel.SelectedTemplate.OutputFolder) ==
+                    DialogResult.Yes)
+                {
+                    Directory.CreateDirectory(_invoiceTemplateModel.SelectedTemplate.OutputFolder);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            if (!File.Exists(_invoiceTemplateModel.ImportAppLocation))
+            {
+                MessageBox.Show(this,
+                    "The Import Application cannot be found.\nCheck 'Tools | Application Settings'",
+                    Application.ProductName,
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                
+                result = false;
+            }
+
+            return result;
+        }
+
+        DialogResult ShowFolderNotFoundDialog(string folderType, string folderPath)
+        {
+            return 
+                MessageBox.Show(
+                this,
+                $"Could not find invoice {folderType} folder: " + 
+                '\n' + folderPath + "\n\nDo you want to create the folder now?",
+                Resources.AppNameText,
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
         }
 
         void InitialiseClientConnectionDetails()
@@ -298,9 +363,8 @@ namespace zInvoiceTransformer
             
             _clientTransferProtocol = RemoteConnectionFactory.Build(
                 Convert.ToInt32(_invoiceTemplateModel.SelectedTemplate
-                                    ?.Element("RemoteInvoiceSettings")
-                                    ?.Attribute("RemoteTransferProtocolTypeId")
-                                    ?.Value ?? "0"));
+                                    ?.RemoteInvoiceSettings
+                                    ?.RemoteTransferProtocolTypeId));
 
             if (_clientTransferProtocol == null)
             {
@@ -323,11 +387,11 @@ namespace zInvoiceTransformer
 
         private void Button1_Click(object sender, EventArgs e)
         {
-            InitialiseClientConnectionDetails();
-            if (_clientTransferProtocol.CheckConnection())
-            {
-                _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
-            }
+            //InitialiseClientConnectionDetails();
+            //if (_clientTransferProtocol.CheckConnection())
+            //{
+            //    _clientTransferProtocol.UploadFile("ZonalInvoiceImport.exe_20201106.log");
+            //}
         }
     }
 }
