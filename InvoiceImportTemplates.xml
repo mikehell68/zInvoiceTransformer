@@ -30,6 +30,20 @@
       <Template Id="2" />
     </ImportOrder>
   </ImportSettings>
+  <Folders>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\USFoodA2A\Downloads"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\USFoodA2A\Downloads\transformed"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\USFoodA2A\Import\ImpErr"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\USFoodA2A\Import\ImpUM"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\Sysco\Downloads"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\Sysco\Downloads\transformed"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\Sysco\Import\ImpErr"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\Sysco\Import\ImpUM"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\GFS\Downloads"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\GFS\Downloads\transformed"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\GFS\Import\ImpErr"/>
+    <Folder AutoCreate="true" Path="C:\Invoice Files\GFS\Import\ImpUM"/>
+  </Folders>
   <Templates>
     <Template Id="1" Name="Roma short" Active="1" TemplateVersion="1" Description="Roma Vistar invoice short format" FileFormatTypeId="1" SourceFolder="c:\temp\Roma" OutputFolder="c:\temp\import" Delimiter="," LbProcessingType="3" HasHeaderRecord="0" HasMasterRecord="1" HasSummaryRecord="0" UoMCase="CS" UoMEach="EA" UoMWeight="LB">
       <MasterRow RecordTypePostion="0" RecordTypeIdentifier="1">

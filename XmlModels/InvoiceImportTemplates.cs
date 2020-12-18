@@ -12,6 +12,8 @@ namespace ZinvoiceTransformer.XmlModels
 
         private InvoiceImportTemplatesImportSettings _importSettingsField;
 
+        private InvoiceImportTemplatesFolder[] foldersField;
+
         private InvoiceImportTemplatesTemplate[] _templatesField;
 
         /// <remarks/>
@@ -26,6 +28,20 @@ namespace ZinvoiceTransformer.XmlModels
         {
             get => _importSettingsField;
             set => _importSettingsField = value;
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlArrayItemAttribute("Folder", IsNullable = false)]
+        public InvoiceImportTemplatesFolder[] Folders
+        {
+            get
+            {
+                return this.foldersField;
+            }
+            set
+            {
+                this.foldersField = value;
+            }
         }
 
         /// <remarks/>

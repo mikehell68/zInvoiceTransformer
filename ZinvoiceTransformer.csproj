@@ -80,6 +80,7 @@
       <DependentUpon>InvoiceImportMain.cs</DependentUpon>
     </Compile>
     <Compile Include="CsvParser.cs" />
+    <Compile Include="XmlModels\InvoiceImportTemplatesFolder.cs" />
     <Compile Include="InvoiceTemplateModel.cs" />
     <Compile Include="Comms\IClientTransferProtocol.cs" />
     <Compile Include="Log.cs" />

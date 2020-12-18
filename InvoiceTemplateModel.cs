@@ -78,10 +78,37 @@ namespace zInvoiceTransformer
         public InvoiceTemplateModel()
         {
             LoadTemplates();
+            CreateWorkingFolders();
             _importAppLocation = ImportTemplates.ImportSettings.ImportAppliction.FileName;
             _importAppInvoiceFileLocation = ImportTemplates.ImportSettings.ImportAppliction.InvoiceFileLocation;
         }
-        
+
+        private void CreateWorkingFolders()
+        {
+            Log.LogThis("Creating working folders", eloglevel.info);
+
+            if (ImportTemplates?.Folders == null || ImportTemplates.Folders.ToList().Count == 0)
+            {
+                Log.LogThis("No working folders defined", eloglevel.info);
+                return;
+            }
+
+            foreach (var folder in ImportTemplates.Folders)
+            {
+                var path = folder.Path ?? "";
+                try
+                {
+                    if (!Directory.Exists(path) && folder.AutoCreate)
+                        Directory.CreateDirectory(path);
+                }
+                catch (Exception ex)
+                {
+                    Log.LogThis($"Unable to create folder '{path}'", eloglevel.error);
+                    Log.LogThis($"{ex}", eloglevel.error);
+                }
+            }
+        }
+
         public void LoadTemplates()
         {
             Log.LogThis("Loading invoice templates", eloglevel.info);
