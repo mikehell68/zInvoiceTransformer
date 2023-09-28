@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ZinvoiceTransformer</RootNamespace>
     <AssemblyName>ZonalInvoiceImport</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -43,14 +43,14 @@
     <ApplicationIcon>invoiceTransform.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AnyClone, Version=1.0.39.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\AnyClone.1.0.39\lib\net45\AnyClone.dll</HintPath>
+    <Reference Include="AnyClone, Version=1.1.6.0, Culture=neutral, PublicKeyToken=ce8a1a9d68396c39, processorArchitecture=MSIL">
+      <HintPath>packages\AnyClone.1.1.6\lib\net48\AnyClone.dll</HintPath>
     </Reference>
-    <Reference Include="AnyDiff, Version=1.0.83.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\AnyDiff.1.0.83\lib\net45\AnyDiff.dll</HintPath>
+    <Reference Include="AnyDiff, Version=1.0.88.0, Culture=neutral, PublicKeyToken=f785a5befb7778dc, processorArchitecture=MSIL">
+      <HintPath>packages\AnyDiff.1.0.88\lib\net48\AnyDiff.dll</HintPath>
     </Reference>
-    <Reference Include="Renci.SshNet, Version=2016.1.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
-      <HintPath>packages\SSH.NET.2016.1.0\lib\net40\Renci.SshNet.dll</HintPath>
+    <Reference Include="Renci.SshNet, Version=2020.0.2.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
+      <HintPath>packages\SSH.NET.2020.0.2\lib\net40\Renci.SshNet.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
