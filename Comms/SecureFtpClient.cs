@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -166,6 +165,44 @@ namespace zInvoiceTransformer.Comms
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+            }
+        }
+
+        public void DeleteRemoteFiles(List<SftpFile> remoteFiles)
+        {
+            using (var sftpClient = new SftpClient(_connectionInfo))
+            {
+                try
+                {
+                    sftpClient.Connect();
+
+                    foreach (var remoteFile in remoteFiles)
+                    {
+                        sftpClient.DeleteFile(remoteFile.FullName);
+                    }
+                    sftpClient.Disconnect();
+                }
+                catch (Exception er)
+                {
+                    Console.WriteLine("An exception has been caught " + er.ToString());
+                }
+            }
+        }
+
+        public void DeleteRemoteFile(SftpFile remoteFile)
+        {
+            using (var sftpClient = new SftpClient(_connectionInfo))
+            {
+                try
+                {
+                    sftpClient.Connect();
+                    sftpClient.DeleteFile(remoteFile.FullName);
+                    sftpClient.Disconnect();
+                }
+                catch (Exception er)
+                {
+                    Console.WriteLine("An exception has been caught " + er.ToString());
+                }
             }
         }
     }

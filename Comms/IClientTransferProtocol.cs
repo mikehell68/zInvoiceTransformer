@@ -12,5 +12,8 @@ namespace zInvoiceTransformer.Comms
         void DownloadFiles(List<string> filesToDownload);
         void DownloadFiles(List<SftpFile> filesToDownload, Action<long> progressAction);
         void UploadFile(string fileToUpload);
+
+        void DeleteRemoteFiles(List<SftpFile> remoteFiles);
+        void DeleteRemoteFile(SftpFile remoteFile);
     }
 }

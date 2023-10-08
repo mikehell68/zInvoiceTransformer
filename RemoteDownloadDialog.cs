@@ -13,11 +13,13 @@ namespace zInvoiceTransformer
         readonly IClientTransferProtocol _clientTransferProtocol;
         List<SftpFile> _fileList;
         long _totalBytesToDownload = 0;
+        InvoiceTemplateModel _invoiceTemplateModel;
 
         public RemoteDownloadDialog(InvoiceTemplateModel invoiceTemplateModel,
             IClientTransferProtocol clientTransferProtocol)
         {
             InitializeComponent();
+            _invoiceTemplateModel = invoiceTemplateModel;
             _clientTransferProtocol = clientTransferProtocol;
             //_getFilesBackgroundWorker.WorkerReportsProgress = true;
             PopulateRemoteConnectionLabels();
@@ -29,6 +31,7 @@ namespace zInvoiceTransformer
             _destinationLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.DestinationFolder;
             _portLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.Port.ToString();
             _remoteLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.RemoteFolder;
+            checkBox1.Checked = _clientTransferProtocol.RemoteConnectionInfo.DeleteRemoteFileAfterDownload;
         }
 
         void RemoteDownloadDialog_Shown(object sender, EventArgs e)
@@ -94,6 +97,11 @@ namespace zInvoiceTransformer
                 if (_clientTransferProtocol.CheckConnection())
                 {
                     _clientTransferProtocol.DownloadFiles(selectedFiles, progress => UpdateProgressBar(progress));
+
+                    if (_clientTransferProtocol.RemoteConnectionInfo.DeleteRemoteFileAfterDownload)
+                    {
+                        _clientTransferProtocol.DeleteRemoteFiles(selectedFiles);
+                    }
                 }
             }
             catch (Exception ex)
@@ -179,6 +187,7 @@ namespace zInvoiceTransformer
         {
             SetUiProgressState(false, true);
             _progressLabel.Text += " complete";
+            StartGetFileListBackgroundWorker();
             //_downloadFilesBackgroundWorker.ReportProgress(100, _progressLabel.Text+" - complete");
         }
     }

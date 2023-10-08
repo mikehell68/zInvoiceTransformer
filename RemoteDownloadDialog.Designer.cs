@@ -51,6 +51,7 @@
             this._refreshListButton = new System.Windows.Forms.Button();
             this._getFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this._downloadFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this._mainPanel.SuspendLayout();
             this._fileListPanel.SuspendLayout();
             this._infoPanel.SuspendLayout();
@@ -70,6 +71,7 @@
             // 
             // _fileListPanel
             // 
+            this._fileListPanel.Controls.Add(this.checkBox1);
             this._fileListPanel.Controls.Add(this._progressLabel);
             this._fileListPanel.Controls.Add(this._progressBar);
             this._fileListPanel.Controls.Add(this.label1);
@@ -285,6 +287,16 @@
             this._downloadFilesBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this._downloadFilesBackgroundWorker_ProgressChanged);
             this._downloadFilesBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._downloadFilesBackgroundWorker_RunWorkerCompleted);
             // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(285, 312);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(113, 24);
+            this.checkBox1.TabIndex = 5;
+            this.checkBox1.Text = "checkBox1";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            // 
             // RemoteDownloadDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -335,5 +347,6 @@
         private System.Windows.Forms.ProgressBar _progressBar;
         private System.Windows.Forms.Label _progressLabel;
         private System.ComponentModel.BackgroundWorker _downloadFilesBackgroundWorker;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }

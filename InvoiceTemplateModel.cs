@@ -207,7 +207,8 @@ namespace zInvoiceTransformer
                         Port = SelectedTemplate.RemoteInvoiceSettings.port,
                         Username = SelectedTemplate.RemoteInvoiceSettings.username,
                         Password = SelectedTemplate.RemoteInvoiceSettings.password,
-                        RemoteFolder = SelectedTemplate.RemoteInvoiceSettings.RemoteFolder
+                        RemoteFolder = SelectedTemplate.RemoteInvoiceSettings.RemoteFolder,
+                        DeleteRemoteFileAfterDownload = SelectedTemplate.RemoteInvoiceSettings.DeleteRemoteFileAfterDownload
                     };
 
                 Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);
