@@ -11,6 +11,7 @@ namespace zInvoiceTransformer
         public string InvoiceFilePrefix { get; set; }
         public string DestinationFolder { get; set; }
         public string RemoteFolder { get; set; }
+        public bool DeleteRemoteFileAfterDownload { get; set; }
 
         public void Validate()
         {

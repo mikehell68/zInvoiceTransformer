@@ -25,6 +25,8 @@ namespace ZinvoiceTransformer.XmlModels
 
         private string invoiceFileCustomerPrefixField;
 
+        private bool deleteRemoteFilesAfterDownloadField;
+
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         public byte RemoteTransferProtocolTypeId
@@ -134,6 +136,20 @@ namespace ZinvoiceTransformer.XmlModels
             set
             {
                 this.invoiceFileCustomerPrefixField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public bool DeleteRemoteFileAfterDownload
+        {
+            get
+            {
+                return this.deleteRemoteFilesAfterDownloadField;
+            }
+            set
+            {
+                this.deleteRemoteFilesAfterDownloadField = value;
             }
         }
     }
