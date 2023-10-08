@@ -31,7 +31,7 @@ namespace zInvoiceTransformer
             _destinationLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.DestinationFolder;
             _portLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.Port.ToString();
             _remoteLabel.Text = _clientTransferProtocol.RemoteConnectionInfo.RemoteFolder;
-            checkBox1.Checked = _clientTransferProtocol.RemoteConnectionInfo.DeleteRemoteFileAfterDownload;
+            _deleteRemoteFileOverrideCheckBox.Checked = _clientTransferProtocol.RemoteConnectionInfo.DeleteRemoteFileAfterDownload;
         }
 
         void RemoteDownloadDialog_Shown(object sender, EventArgs e)
@@ -98,7 +98,7 @@ namespace zInvoiceTransformer
                 {
                     _clientTransferProtocol.DownloadFiles(selectedFiles, progress => UpdateProgressBar(progress));
 
-                    if (_clientTransferProtocol.RemoteConnectionInfo.DeleteRemoteFileAfterDownload)
+                    if (_deleteRemoteFileOverrideCheckBox.Checked)
                     {
                         _clientTransferProtocol.DeleteRemoteFiles(selectedFiles);
                     }

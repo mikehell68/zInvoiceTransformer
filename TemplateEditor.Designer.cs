@@ -1141,9 +1141,9 @@
             this._deleteRemoteFileLbl.AutoSize = true;
             this._deleteRemoteFileLbl.Location = new System.Drawing.Point(61, 242);
             this._deleteRemoteFileLbl.Name = "_deleteRemoteFileLbl";
-            this._deleteRemoteFileLbl.Size = new System.Drawing.Size(138, 20);
+            this._deleteRemoteFileLbl.Size = new System.Drawing.Size(146, 20);
             this._deleteRemoteFileLbl.TabIndex = 17;
-            this._deleteRemoteFileLbl.Text = "Delete remote file:";
+            this._deleteRemoteFileLbl.Text = "Delete remote files:";
             this.toolTip1.SetToolTip(this._deleteRemoteFileLbl, "Delete remote files from the ftp server after download");
             // 
             // _deleteRemoteFilesCheckBox

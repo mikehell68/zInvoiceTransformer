@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(RemoteDownloadDialog));
             this._mainPanel = new System.Windows.Forms.Panel();
             this._fileListPanel = new System.Windows.Forms.Panel();
@@ -51,7 +52,8 @@
             this._refreshListButton = new System.Windows.Forms.Button();
             this._getFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
             this._downloadFilesBackgroundWorker = new System.ComponentModel.BackgroundWorker();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this._deleteRemoteFileOverrideCheckBox = new System.Windows.Forms.CheckBox();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this._mainPanel.SuspendLayout();
             this._fileListPanel.SuspendLayout();
             this._infoPanel.SuspendLayout();
@@ -66,12 +68,12 @@
             this._mainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mainPanel.Location = new System.Drawing.Point(0, 0);
             this._mainPanel.Name = "_mainPanel";
-            this._mainPanel.Size = new System.Drawing.Size(410, 586);
+            this._mainPanel.Size = new System.Drawing.Size(410, 616);
             this._mainPanel.TabIndex = 0;
             // 
             // _fileListPanel
             // 
-            this._fileListPanel.Controls.Add(this.checkBox1);
+            this._fileListPanel.Controls.Add(this._deleteRemoteFileOverrideCheckBox);
             this._fileListPanel.Controls.Add(this._progressLabel);
             this._fileListPanel.Controls.Add(this._progressBar);
             this._fileListPanel.Controls.Add(this.label1);
@@ -80,14 +82,14 @@
             this._fileListPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this._fileListPanel.Location = new System.Drawing.Point(0, 124);
             this._fileListPanel.Name = "_fileListPanel";
-            this._fileListPanel.Size = new System.Drawing.Size(410, 385);
+            this._fileListPanel.Size = new System.Drawing.Size(410, 415);
             this._fileListPanel.TabIndex = 2;
             // 
             // _progressLabel
             // 
             this._progressLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this._progressLabel.AutoSize = true;
-            this._progressLabel.Location = new System.Drawing.Point(7, 345);
+            this._progressLabel.Location = new System.Drawing.Point(7, 375);
             this._progressLabel.Name = "_progressLabel";
             this._progressLabel.Size = new System.Drawing.Size(0, 20);
             this._progressLabel.TabIndex = 4;
@@ -96,7 +98,7 @@
             // 
             this._progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this._progressBar.Location = new System.Drawing.Point(7, 368);
+            this._progressBar.Location = new System.Drawing.Point(7, 398);
             this._progressBar.Name = "_progressBar";
             this._progressBar.Size = new System.Drawing.Size(393, 11);
             this._progressBar.TabIndex = 3;
@@ -114,7 +116,7 @@
             // 
             this._selectAllCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this._selectAllCheckBox.AutoSize = true;
-            this._selectAllCheckBox.Location = new System.Drawing.Point(7, 312);
+            this._selectAllCheckBox.Location = new System.Drawing.Point(7, 322);
             this._selectAllCheckBox.Name = "_selectAllCheckBox";
             this._selectAllCheckBox.Size = new System.Drawing.Size(168, 24);
             this._selectAllCheckBox.TabIndex = 1;
@@ -236,7 +238,7 @@
             this._buttonPanel.Controls.Add(this._downloadFilesButton);
             this._buttonPanel.Controls.Add(this._refreshListButton);
             this._buttonPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._buttonPanel.Location = new System.Drawing.Point(0, 509);
+            this._buttonPanel.Location = new System.Drawing.Point(0, 539);
             this._buttonPanel.Name = "_buttonPanel";
             this._buttonPanel.Size = new System.Drawing.Size(410, 77);
             this._buttonPanel.TabIndex = 0;
@@ -287,22 +289,24 @@
             this._downloadFilesBackgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this._downloadFilesBackgroundWorker_ProgressChanged);
             this._downloadFilesBackgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._downloadFilesBackgroundWorker_RunWorkerCompleted);
             // 
-            // checkBox1
+            // _deleteRemoteFileOverrideCheckBox
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(285, 312);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(113, 24);
-            this.checkBox1.TabIndex = 5;
-            this.checkBox1.Text = "checkBox1";
-            this.checkBox1.UseVisualStyleBackColor = true;
+            this._deleteRemoteFileOverrideCheckBox.AutoSize = true;
+            this._deleteRemoteFileOverrideCheckBox.Location = new System.Drawing.Point(226, 312);
+            this._deleteRemoteFileOverrideCheckBox.Name = "_deleteRemoteFileOverrideCheckBox";
+            this._deleteRemoteFileOverrideCheckBox.Size = new System.Drawing.Size(172, 44);
+            this._deleteRemoteFileOverrideCheckBox.TabIndex = 5;
+            this._deleteRemoteFileOverrideCheckBox.Text = "Delete remote \r\nfiles after download";
+            this.toolTip1.SetToolTip(this._deleteRemoteFileOverrideCheckBox, "Temporarily overrides the \'Delete Remote Files\' setting \r\nin the Template Editer " +
+        "- Remote Invoice Settings.");
+            this._deleteRemoteFileOverrideCheckBox.UseVisualStyleBackColor = true;
             // 
             // RemoteDownloadDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this._closeFormButton;
-            this.ClientSize = new System.Drawing.Size(410, 586);
+            this.ClientSize = new System.Drawing.Size(410, 616);
             this.Controls.Add(this._mainPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -347,6 +351,7 @@
         private System.Windows.Forms.ProgressBar _progressBar;
         private System.Windows.Forms.Label _progressLabel;
         private System.ComponentModel.BackgroundWorker _downloadFilesBackgroundWorker;
-        private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.CheckBox _deleteRemoteFileOverrideCheckBox;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
