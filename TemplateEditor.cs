@@ -32,7 +32,7 @@ namespace zInvoiceTransformer
         {
             _originalTemplate = _invoiceTemplateModel.GetTemplate(templateId);
             CreateRemoteInvoiceSettingsElementIfRequired();
-            _selectedTemplateClone = AnyClone.Cloner.Clone(_originalTemplate);
+            _selectedTemplateClone = _originalTemplate.DeepClone();
         }
 
         void InitialiseBindings()
@@ -177,6 +177,7 @@ namespace zInvoiceTransformer
                 _keyfileLocationTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.keyfileLocation;
                 _invoiceFilePrefixTextBox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.InvoiceFileCustomerPrefix;
                 _remoteFolderTextbox.Text = _selectedTemplateClone.RemoteInvoiceSettings?.RemoteFolder;
+                _deleteRemoteFilesCheckBox.Checked = _selectedTemplateClone.RemoteInvoiceSettings.DeleteRemoteFileAfterDownload;
             }
 
             _templateFieldDefinitionsFlowLayoutPanel.ResumeLayout();
@@ -194,7 +195,8 @@ namespace zInvoiceTransformer
                     RemoteFolder = "",
                     RemoteTransferProtocolTypeId = 0, 
                     url = "", 
-                    username = ""
+                    username = "",
+                    DeleteRemoteFileAfterDownload = false
                 };
         }
 
@@ -410,6 +412,7 @@ namespace zInvoiceTransformer
             _selectedTemplateClone.RemoteInvoiceSettings.keyfileLocation = _keyfileLocationTextbox.Text;
             _selectedTemplateClone.RemoteInvoiceSettings.InvoiceFileCustomerPrefix = _invoiceFilePrefixTextBox.Text;
             _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder = _remoteFolderTextbox.Text;
+            _selectedTemplateClone.RemoteInvoiceSettings.DeleteRemoteFileAfterDownload = _deleteRemoteFilesCheckBox.Checked;
 
             _selectedTemplateClone.HasMasterRecord =_hasMasterCheckBox.Checked;
             _selectedTemplateClone.MasterRow.RecordTypePostion = (sbyte)_masterRecordPositionNumericUpDown.Value;
@@ -640,7 +643,8 @@ namespace zInvoiceTransformer
                         Port = _selectedTemplateClone.RemoteInvoiceSettings.port,
                         Username = _selectedTemplateClone.RemoteInvoiceSettings.username,
                         Password = _selectedTemplateClone.RemoteInvoiceSettings.password,
-                        RemoteFolder = _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder
+                        RemoteFolder = _selectedTemplateClone.RemoteInvoiceSettings.RemoteFolder,
+                        DeleteRemoteFileAfterDownload = _selectedTemplateClone.RemoteInvoiceSettings.DeleteRemoteFileAfterDownload
                     };
 
                 Log.LogThis("Unable to create RemoteInvoiceConnectionInfo - Selected template is null, check template exists for this supplier", eloglevel.error);

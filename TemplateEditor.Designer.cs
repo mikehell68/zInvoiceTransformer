@@ -118,6 +118,8 @@
             this._folderDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this._deleteRemoteFileLbl = new System.Windows.Forms.Label();
+            this._deleteRemoteFilesCheckBox = new System.Windows.Forms.CheckBox();
             this._mainPanel.SuspendLayout();
             this._templateDetailPanel.SuspendLayout();
             this._templateAttributesPanel.SuspendLayout();
@@ -804,6 +806,8 @@
             // 
             // _remoteSettingsFieldPanel
             // 
+            this._remoteSettingsFieldPanel.Controls.Add(this._deleteRemoteFilesCheckBox);
+            this._remoteSettingsFieldPanel.Controls.Add(this._deleteRemoteFileLbl);
             this._remoteSettingsFieldPanel.Controls.Add(this._invoiceFilePrefixTextBox);
             this._remoteSettingsFieldPanel.Controls.Add(this._remoteFolderTextbox);
             this._remoteSettingsFieldPanel.Controls.Add(this._urlLabel);
@@ -822,7 +826,7 @@
             this._remoteSettingsFieldPanel.Controls.Add(this._usernameTextbox);
             this._remoteSettingsFieldPanel.Location = new System.Drawing.Point(28, 96);
             this._remoteSettingsFieldPanel.Name = "_remoteSettingsFieldPanel";
-            this._remoteSettingsFieldPanel.Size = new System.Drawing.Size(555, 356);
+            this._remoteSettingsFieldPanel.Size = new System.Drawing.Size(555, 374);
             this._remoteSettingsFieldPanel.TabIndex = 17;
             // 
             // _invoiceFilePrefixTextBox
@@ -903,7 +907,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(296, 295);
+            this.button2.Location = new System.Drawing.Point(296, 316);
             this.button2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(189, 35);
@@ -915,7 +919,7 @@
             // _keyfileLocationLabel
             // 
             this._keyfileLocationLabel.AutoSize = true;
-            this._keyfileLocationLabel.Location = new System.Drawing.Point(61, 242);
+            this._keyfileLocationLabel.Location = new System.Drawing.Point(61, 273);
             this._keyfileLocationLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this._keyfileLocationLabel.Name = "_keyfileLocationLabel";
             this._keyfileLocationLabel.Size = new System.Drawing.Size(124, 20);
@@ -925,7 +929,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(493, 234);
+            this.button1.Location = new System.Drawing.Point(493, 265);
             this.button1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(39, 31);
@@ -945,7 +949,7 @@
             // 
             // _keyfileLocationTextbox
             // 
-            this._keyfileLocationTextbox.Location = new System.Drawing.Point(205, 239);
+            this._keyfileLocationTextbox.Location = new System.Drawing.Point(205, 270);
             this._keyfileLocationTextbox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this._keyfileLocationTextbox.Name = "_keyfileLocationTextbox";
             this._keyfileLocationTextbox.Size = new System.Drawing.Size(280, 26);
@@ -1132,6 +1136,27 @@
             this._newTemplateButton.UseVisualStyleBackColor = true;
             this._newTemplateButton.Click += new System.EventHandler(this._newTemplate_Click);
             // 
+            // _deleteRemoteFileLbl
+            // 
+            this._deleteRemoteFileLbl.AutoSize = true;
+            this._deleteRemoteFileLbl.Location = new System.Drawing.Point(61, 242);
+            this._deleteRemoteFileLbl.Name = "_deleteRemoteFileLbl";
+            this._deleteRemoteFileLbl.Size = new System.Drawing.Size(146, 20);
+            this._deleteRemoteFileLbl.TabIndex = 17;
+            this._deleteRemoteFileLbl.Text = "Delete remote files:";
+            this.toolTip1.SetToolTip(this._deleteRemoteFileLbl, "Delete remote files from the ftp server after download");
+            // 
+            // _deleteRemoteFilesCheckBox
+            // 
+            this._deleteRemoteFilesCheckBox.AutoSize = true;
+            this._deleteRemoteFilesCheckBox.Location = new System.Drawing.Point(205, 241);
+            this._deleteRemoteFilesCheckBox.Name = "_deleteRemoteFilesCheckBox";
+            this._deleteRemoteFilesCheckBox.Size = new System.Drawing.Size(22, 21);
+            this._deleteRemoteFilesCheckBox.TabIndex = 18;
+            this.toolTip1.SetToolTip(this._deleteRemoteFilesCheckBox, "When checked, remote files will be deleted from the ftp server after they have be" +
+        "en downloaded.");
+            this._deleteRemoteFilesCheckBox.UseVisualStyleBackColor = true;
+            // 
             // TemplateEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -1268,5 +1293,7 @@
         private System.Windows.Forms.TextBox _remoteFolderTextbox;
         private System.Windows.Forms.Label _remoteFolderLabel;
         private System.Windows.Forms.Panel _remoteSettingsFieldPanel;
+        private System.Windows.Forms.Label _deleteRemoteFileLbl;
+        private System.Windows.Forms.CheckBox _deleteRemoteFilesCheckBox;
     }
 }
